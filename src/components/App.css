@@ -1,0 +1,662 @@
+*{
+  font-family: 'Montserrat', sans-serif;
+}
+
+/*** Css login et register***/
+.luham{  
+  color: #20b809;
+  text-align: center;
+  font-family: initial;
+}
+.bas-register {
+  position: absolute;
+   text-align: center;
+  margin : auto;
+  font-style:italic;
+   font-size:10px;
+ top: 590px;
+ left: 35%;
+}
+.bas-login {
+  position: absolute;
+   text-align: center;
+  margin : auto;
+  font-style:italic;
+   font-size:10px;
+ top: 560px;
+ left: 35%;
+}
+.fa {
+  position:relative;
+  top:5px!important;
+  left: 105px!important;
+}
+.compte-login {
+  color: #eb2b09;
+  position:absolute;
+  left:26%;
+  font-size:20px;
+}
+.bas-logi {
+  position: absolute;
+   text-align: center;
+  margin : auto;
+  font-style:italic;
+   font-size:10px;
+ top: 360px;
+ left:39%
+}
+.page  {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #333; 
+  color: aliceblue;
+  background-image: url("https://farm4.staticflickr.com/3322/3413777715_14ea926b75.jpg");
+  background-blend-mode: multiply;
+  background-repeat: repeat;
+  background-size: 300px;
+  position: relative;
+  padding: 0;
+  margin: 0;
+}
+h1{
+  font-family: 'Montserrat', sans-serif;
+  font-size:26px;
+}
+.container-form {
+  position: relative;
+  width: 500px;
+  height: 300px;
+  top: -20px;
+/*  Pour centrer le contenu d'un bloc  on utilise la prop text-align  */
+  text-align: center; 
+/*  Pour centrer un bloc on doit d'abord préciser le width et utiliser ensuite la prop margin  */
+  margin : auto;
+  background-color: rgba(68, 75, 84,0.8);
+  margin-top: 150px;
+  border-radius: 5px;
+}
+img {
+  width: 150px;
+  border-radius:50%;
+  margin-top:-70px;
+  margin-bottom: 30px;
+}
+ input {
+  height: 40px;
+  width: 300px;
+  font-size: 18px;
+  font-family: "Lato";
+  margin-bottom: 10px;
+  border-radius: 5px;
+  padding-left: 35px;
+   border-radius: 12px;
+}
+.form-input {
+  position:relative;
+}
+.fa-lock, .fa-user {
+  position:absolute;
+  top: 8px;
+  left: 88px;
+  color:#3BA8A5;
+}
+.submit {
+  width: 150px;
+  height: 40px;
+  padding: 5px;
+  background-color: #0f0202;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border-radius: 12px;
+  color: aliceblue;
+}
+.submit:hover {
+  cursor: pointer;
+  background-color: #2bdd07;
+  color: white;
+}
+.submit-reg {
+  position: relative;
+  width: 150px;
+  height: 40px;
+  padding: 5px;
+  left: 5px!important;
+  background-color: #0f0202;
+  top: -8px;
+  border-radius: 12px;
+  color: aliceblue;
+}
+.submit-reg:hover {
+  cursor: pointer;
+  background-color: #2bdd07;
+  color: white;
+}
+.para_1 {
+  position: relative;
+   width: 500px;
+   text-align: center;
+   margin : auto;
+ top: -1px;
+}
+.text-col {
+  position: relative;
+   margin : auto;
+ top: 11px!important;
+}
+.text-inf {
+  position: relative;
+   margin : auto;
+   text-align: center;
+ color:hsl(110, 92%, 49%);
+}
+.detail {
+  position: relative;
+  font-size: 14px;
+   margin : auto;
+}
+.detaille {
+  position: relative;
+   margin : auto;
+   top: -20px;
+   font-style:italic;
+}
+.info-colis {
+  position: relative;
+   margin : auto;
+   top: -10px;
+   font-style:italic;
+   font-size: 14px;
+}
+.info-colis-1 {
+  position: relative;
+  font-size: 14px;
+   margin : auto;
+   top: 5px;
+   font-style:italic;
+}
+.info-colis-2 {
+  position: relative;
+  font-size: 14px;
+   margin : auto;
+   top: -17px;
+   font-style:italic;
+}
+.info-colis-3 {
+  position: relative;
+  font-size: 14px;
+   margin : auto;
+   top: -19px;
+   font-style:italic;
+}
+.info-colis-4 {
+  position: relative;
+  font-size: 14px;
+   margin : auto;
+   top: -19px;
+   font-style:italic;
+}
+.info-colis-5 {
+  position: absolute;
+  font-size: 14px;
+   margin : auto;
+   top: -9px!important;
+   font-style:italic;
+   left:23px;
+}
+.titre-colis {
+  position:relative;
+   margin : auto;
+   top: 29px!important;
+    left: 24px!important;
+   font-style:italic;
+   font-size: 18px;
+}
+.dest {
+  position:relative;
+   margin : auto;
+   left: 24px!important;
+   font-style:italic;
+   font-size: 18px;
+   top: 12px!important;
+}
+.btn-col {
+  position:relative;
+  margin:auto;
+   top: 38px!important;
+   text-align:center;
+}
+.text-dest {
+  position:relative;
+   font-style:italic;
+   font-size: 16px;
+}
+.forme {
+  position: relative;
+  height: 460px !important;
+  width: 350px!important;
+  border: 2px dashed hsl(0, 90%, 43%); 
+  margin: auto;
+  top: 29px !important;
+  font-style: italic;
+  font-size: 18px;
+  color:#0f0202;
+}
+
+.col {
+  position: relative;
+   width: 500px;
+   text-align: center;
+   margin : auto;
+ top: 31px;
+}
+.btn-groupe {
+  position: relative;
+   text-align: center!important;
+   margin : auto;
+    top: 28px;
+}
+.coli-numero {
+  position: relative;
+   text-align: center!important;
+   margin : auto;
+    top: 11px;
+}
+.para_1_export {
+  position: relative;
+   width: 500px;
+   text-align: center;
+   margin : auto;
+ top: -25px;
+}
+.bas {
+  position: relative;
+   text-align: center;
+   margin : auto;
+ top: -20px;
+}
+.compte {
+  color: #eb2b09;
+  position:absolute;
+  left:42%;
+}
+.comte {
+  color: white;
+  position:absolute;
+  left:72%;
+  top:102px;
+ font-style:italic;
+}
+.rech {
+  position:relative;
+  left:2%;
+}
+.luham p-6 {
+  position:relative;
+  top: -2% !important;;
+}
+.compt {
+  position:absolute;
+  top: 16px;
+  left: 130px;
+  text-align:center;
+  color: #eb2b09;
+}
+.comp {
+  color: #eb2b09;
+  position: relative;
+  left: 540px;
+  top: -55px;
+}
+.droit {
+  font-family: "Georgia", serif;
+  font-style: italic;
+  font-size: 11px;
+}
+.admin {
+  width: 150px;
+}
+.admine {
+  position: relative;
+  top: -22px;
+  width: 150px;
+  left: -29px;
+}
+
+
+/*** Css home***/
+
+.home {
+  position: relative;
+ text-align: center;
+ top: 140px;
+}
+.titre {
+  position: relative;
+ text-align: center;
+ top: -70px;
+}
+.lesImput {
+  position: relative;
+  top: -50px;
+}
+.lesButton {
+  position: relative;
+  top: -60px;
+  padding: 5px;
+}
+
+.container-home {
+  width: 1000px;
+  display: flex;
+  flex-direction:row-reverse;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin:12px;
+}
+
+.container-home .btn {
+ position: relative;
+  top: 0;
+  left:15%;
+  width: 250px;
+  height: 50px;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.container-home .btn a {
+  position: absolute;
+  top: 70%;
+  left: 0;
+  width: 90%;
+  height: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 15px 15px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  padding: 10px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  overflow: hidden;
+  color: #fff;
+  font-weight: 400px;
+  z-index: 1;
+  transition: 0.5s;
+  backdrop-filter: blur(15px);
+}
+.container .btn:hover a {
+  letter-spacing: 3px;
+}
+.container .btn a::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.15), transparent);
+  transform: skewX(45deg) translate(0);
+  transition: 0.5s;
+  filter: blur(0px);
+}
+.container-home .btn:hover a {
+  letter-spacing: 3px;
+}
+.container-home .btn a::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.15), transparent);
+  transform: skewX(45deg) translate(0);
+  transition: 0.5s;
+  filter: blur(0px);
+}
+.container-home .btn:hover a::before {
+  transform: skewX(45deg) translate(200px);
+}
+.container-home .btn::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translatex(-50%);
+  bottom: -5px;
+  width: 30px;
+  height: 10px;
+  background: #f00;
+  border-radius: 10px;
+  transition: 0.5s;
+  transition-delay: 0.5;
+}
+.containe-home .btn:hover::before /*lightup button*/ {
+  bottom: 0;
+  height: 50%;
+  width: 80%;
+  border-radius: 30px;
+}
+
+.container-home .btn::after {
+  content: "";
+  position: absolute;
+  transform: translatex(-50%);
+  top: 20px;
+  width: 60px;
+  height: 50px;
+  background: #f00;
+  border-radius: 10px;
+  transition: 0.5s;
+  transition-delay: 0.5;
+}
+.container-home .btn:hover::after /*lightup button*/ {
+  top: 50%;
+  left:50%;
+  height: 50%;
+  width: 80%;
+  border-radius: 30px;
+}
+.container-home .btn:nth-child(1)::before, /*chnage 1*/
+.container-home .btn:nth-child(1)::after {
+  background: #ff1f71;
+  box-shadow: 0 0 5px #ff1f71, 0 0 15px #ff1f71, 0 0 30px #ff1f71,
+    0 0 60px #ff1f71;
+}
+.container-home .btn:nth-child(3)::before, /*chnage 3*/
+.container-home .btn:nth-child(3)::after {
+  background: #6941d8;
+  box-shadow: 0 0 5px #5965cf, 0 0 15px #6f58d6, 0 0 30px #6954dd,
+    0 0 60px #6849d8;
+}
+.container-home .btn:nth-child(2)::before, /* 2*/
+.container-home .btn:nth-child(2)::after {
+  position:relative;
+  background: #1eff45;
+  box-shadow: 0 0 5px #1eff45, 0 0 15px #1eff45, 0 0 30px #1eff45,
+    0 0 60px #1eff45;
+}
+.bas-home {
+  position: absolute;
+   text-align: center;
+  margin : auto;
+  font-style:italic;
+   font-size:10px;
+ top: 360px;
+ left:30%
+}
+
+/*** Css AjouterProduit***/
+.compte-ajout {
+  color: #eb2b09;
+  position:absolute;
+  left:22%;
+}
+.container-ajout {
+  position: relative;
+  width: 500px;
+  height: 300px;
+  padding:5px;
+  margin: 10px;
+  top: -95px;
+/*  Pour centrer le contenu d'un bloc  on utilise la prop text-align  */
+  text-align: center; 
+/*  Pour centrer un bloc on doit d'abord préciser le width et utiliser ensuite la prop margin  */
+  margin : auto;
+  margin-top: 150px;
+  border-radius: 5px;
+}
+.bas-ajout {
+  position: relative;
+   text-align: center;
+   margin : auto;
+   font-style:italic;
+   font-size:10px;
+   top:115px;
+}
+.w-full {
+  position: relative;
+   top:-15px;
+}
+
+a {
+  color: #20b809;
+}
+.submit-ajout {
+  width: 150px;
+  height: 40px;
+  padding: 5px;
+  background-color: #0f0202;
+  margin-bottom: 30px;
+  border-radius: 12px;
+  color: aliceblue;
+  position:relative;
+  top:-7px;
+}
+.submit-ajout:hover {
+  cursor: pointer;
+  background-color: #2bdd07;
+  color: white;
+}
+
+/*** Css export***/
+.pdf {
+ width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* Empêche strictement le défilement (pas de scroll) */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #2f3542; /* Fond sombre pour faire ressortir la feuille */
+  margin: 0;
+  padding: 0;
+}
+.from-pdf{
+position:relative;
+display:flex;
+flex-direction:row;
+width:45px;
+}
+.from-pfd{
+position:relative;
+display:flex;
+flex-direction:row;
+text-align:center;
+}
+
+textarea{
+  position:relative;
+  top:30px;
+  height: 90px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  font-size: 16px;
+  resize: none;
+}
+.space-y-3{
+  position:relative;
+  text-align:center;
+  margin: 10px;
+  padding: 10px;
+}
+.text-1{
+  position:relative;
+  text-align:center;
+  margin: 10px;
+  top: 13px;
+}
+.hauteur{
+  position:relative;
+  text-align:center;
+ left:225px;
+ top: 5px;
+}
+.qte{
+  position:relative;
+  text-align:center;
+ left:200px;
+ top: 5px;
+}
+.code{
+  position:relative;
+  text-align:center;
+ left:180px;
+ top: 5px;
+}
+.volume{
+  position:relative;
+  text-align:center;
+ left:367px;
+}
+.large{
+  position:relative;
+  text-align:center;
+ left:307px;
+}
+.numero{
+  position:relative;
+  text-align:center;
+ left:235px;
+}
+.embalage{
+  position:relative;
+  text-align:center;
+ left:225px;
+}
+.nature{
+  position:relative;
+  text-align:center;
+ left:215px;
+}
+.date{
+  position:relative;
+  text-align:center;
+ top:5px;
+}
+.lesbtn{
+  position:relative;
+  text-align:center;
+ padding:5px;
+ margin:5px;
+}
+.doc{
+  position:relative;
+  width: 50vh;
+  height: 25vh;
+  text-align:center;
+ padding:15px;
+ margin:15px;
+}
+.form-colis{
+  position:relative;
+  top:55px;
+  text-align:center;
+ padding:15px;
+ margin:15px;
+}
