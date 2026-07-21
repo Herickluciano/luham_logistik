@@ -5,6 +5,9 @@ import { useReactToPrint } from "react-to-print";
 import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 
+// Fixation définitive de l'URL de votre backend Render
+const API_URL = "https://onrender.com";
+
 function Colis() {
   const navigate = useNavigate();
   const componentRef = useRef();
@@ -63,21 +66,34 @@ function Colis() {
   useEffect(() => {
     const chargerProduit = async () => {
       if (!formData.produitId) return;
+
       try {
-        const res = await axios.get(`https://onrender.com${formData.produitId}`);
+        const res = await axios.get(`${API_URL}/produits/${formData.produitId}`);
+
         setFormData((prev) => ({
           ...prev,
-          dest_gtin: res.data.gtin || prev.dest_gtin,
-          produit_nom: res.data.nom || "Produit Inconnu" 
+          dest_gtin: res.data.gtin || "",
+          produit_nom: res.data.nom || "Produit inconnu"
         }));
+
       } catch (error) {
+        console.error(error);
         console.log("Produit non trouvé");
-        setFormData(prev => ({ ...prev, produit_nom: "" }));
+
+        setFormData((prev) => ({
+          ...prev,
+          produit_nom: "",
+          dest_gtin: ""
+        }));
       }
     };
+
     chargerProduit();
   }, [formData.produitId]);
 
+  // ======================
+  // IMPRESSION & ENVOI
+  // ======================
   const handlePrint = useReactToPrint({
     content: () => componentRef.current
   });
@@ -96,7 +112,6 @@ function Colis() {
     };
 
     try {
-      // 3. Correction de la route d'envoi pour cibler /colis
       const res = await axios.post(`${API_URL}/colis`, dataToSend);
       setColisCree({ id: res.data.id, ...dataToSend });
       alert("Colis enregistré !");
