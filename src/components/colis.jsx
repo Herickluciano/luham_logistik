@@ -96,7 +96,8 @@ function Colis() {
     };
 
     try {
-      const res = await axios.post("https://onrender.com", dataToSend);
+      // 3. Correction de la route d'envoi pour cibler /colis
+      const res = await axios.post(`${API_URL}/colis`, dataToSend);
       setColisCree({ id: res.data.id, ...dataToSend });
       alert("Colis enregistré !");
     } catch (error) {

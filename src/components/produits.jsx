@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios"; 
 import { useNavigate } from "react-router-dom"; // Import nécessaire pour la redirection
 
-const API_URL = "https://onrender.com";
+// Correction de l'URL pour cibler dynamiquement votre backend sur Render
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Produits() {
   const companyName = localStorage.getItem("company_name") || "Mon Entreprise";
@@ -103,7 +104,7 @@ function Produits() {
 
  return ( 
     <div className="p-10 bg-slate-50 min-h-screen font-sans"> 
-      <div className="max-w-5xl mx-auto  rounded-3xl shadow-xl overflow-hidden">
+      <div className="max-w-5xl mx-auto rounded-3xl shadow-xl overflow-hidden">
         
         <div className="luham p-6">
           <h1 className="text-titre">
@@ -126,22 +127,23 @@ function Produits() {
             <h3 className="compte">Gestion des produits</h3>
             <div className="comte">
                <button 
-            type="button"
-            onClick={() => navigate("/home")}
-            className="submit-reg "
-          >
-            Retour l'accueil
-          </button></div>
+                type="button"
+                onClick={() => navigate("/home")}
+                className="submit-reg "
+              >
+                Retour à l'accueil
+              </button>
+            </div>
              {/* SEARCH BAR */}
-        <div className="rech p-6 border-b">
-          <input
-            type="text"
-            placeholder="🔎 Rechercher par 4 derniers chiffres du GTIN..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            <div className="rech p-6 border-b">
+              <input
+                type="text"
+                placeholder="🔎 Rechercher par 4 derniers chiffres du GTIN..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
         </div>
 
@@ -189,7 +191,7 @@ function Produits() {
               <table className="table table-dark text-center">
                 <thead>
                   <tr>
-                    <th scope="col" className="py-1 px-3 text-[11px] uppercase tracking-wider text-slate-500">Numero du produit</th>
+                    <th scope="col" className="py-1 px-3 text-[11px] uppercase tracking-wider text-slate-500">Numéro du produit</th>
                     <th scope="col" className="py-1 px-3 text-[11px] uppercase tracking-wider text-slate-500">Produit & description</th>
                     <th scope="col" className="py-1 px-3 text-[11px] uppercase tracking-wider text-slate-500">Codice/Ref </th>
                     <th scope="col" className="py-1 px-3 text-[11px] uppercase tracking-wider text-slate-500">Dimensions</th>
@@ -199,42 +201,31 @@ function Produits() {
                 <tbody>
                   {produitsFiltres.map((p) => (
                     <tr key={p.id}>
-                      {/* Utilisation de th scope="row" pour l'ID (Rectangle Gris) */}
                       <th scope="row" className="py-1 px-3 font-mono text-[11px] text-center font-normal" style={{ backgroundColor: "#f1f5f9", color: "#64748b", borderRadius: "6px" }}>
                         {p.id}
                       </th>
-                      
-                      {/* Rectangle Produit (Vert) */}
                       <td className="py-1 px-4" style={{ backgroundColor: "#e6f4ea", borderRadius: "6px" }}>
                         <p className="font-bold text-xs leading-none" style={{ color: "#0f5132" }}>{p.nom}</p>
                         {p.description && (
                           <p className="text-[9px] italic leading-none mt-0.5" style={{ color: "#137333" }}>{p.description}</p>
                         )}
                       </td>
-                      
-                      {/* Rectangle GTIN (Bleu) */}
-                      <td className="py-1 px-4 font-mono text-[11px] font-bold text-center" style={{ backgroundColor: "#e8f0fe", color: "#1a73e8", borderRadius: "6px" }}>
-                        {p.gtin}
+                      <td className="py-1 px-4 font-mono text-[11px] font-bold" style={{ backgroundColor: "#e8f0fe", color: "#1a73e8", borderRadius: "6px" }}>
+                        {p.gtin || "N/A"}
                       </td>
-                      
-                      {/* Rectangle Dimensions (Orange/Jaune) */}
-                      <td className="py-1 px-4 text-[11px] text-center" style={{ backgroundColor: "#fff4e5", color: "#b06000", borderRadius: "6px" }}>
+                      <td className="py-1 px-4 text-xs text-slate-600">
                         {p.dimensions || "N/A"}
                       </td>
-                      
-                      {/* Rectangle Actions (Violet) */}
-                      <td className="py-1 px-4 text-right" style={{ backgroundColor: "#f3e8ff", borderRadius: "6px" }}>
+                      <td className="py-1 px-4 text-right flex justify-end gap-2">
                         <button 
-                          onClick={() => setEditingProduct(p)}
-                          className="mr-3 text-[10px] font-bold uppercase hover:underline"
-                          style={{ color: "#7c3aed" }}
+                          onClick={() => setEditingProduct(p)} 
+                          className="bg-yellow-500 text-white px-2 py-1 rounded text-xs"
                         >
                           Modifier
                         </button>
                         <button 
-                          onClick={() => handleDelete(p.id)}
-                          className="text-[10px] font-bold uppercase hover:underline"
-                          style={{ color: "#ef4444" }}
+                          onClick={() => handleDelete(p.id)} 
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs"
                         >
                           Supprimer
                         </button>
@@ -247,9 +238,8 @@ function Produits() {
           )}
         </div>
       </div>
-    </div> 
-);
-
+    </div>
+  );
 }
 
 export default Produits;
