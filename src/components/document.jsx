@@ -9,7 +9,7 @@ function Document({ data }) {
      const navigate = useNavigate();
     const companyName = localStorage.getItem("company_name") || "Mon Entreprise";
     const companyId = localStorage.getItem("company_id");
-    const API_URL = "http://localhost:3000";
+    const API_URL = "https://onrender.com";
   
      useEffect(() => {
       // Si pas de token, on ne lance pas le minuteur

@@ -2,10 +2,10 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import './App.css'
+import './App.css';
 
-
-function login() {
+// 1. Première lettre en Majuscule pour le nom du composant React
+function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erreur, setErreur] = useState("");
@@ -22,7 +22,8 @@ function login() {
     setErreur("");
 
     try {
-      const res = await axios.post("http://localhost:3000", {
+      // 2. Utilisation de la variable d'environnement pour pointer vers votre vrai backend Render
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/`, {
         email,
         password,
       });
@@ -133,7 +134,7 @@ function login() {
           </div>
         </form>
         <div className="bas-login">
-        <span className="slogan">“<strong className="luham">LuhamCode</strong> – L’innovation  digitale qui rapproche le monde.”</span>
+        <span className="slogan">“<strong className="luham">LuhamCode</strong> – L’innovation digitale qui rapproche le monde.”</span>
         <a className=" btn-success resp-1" href="https://luhamcode.com/contact" role="button"> Contactez-nous</a>
         <div>
          <p className="droit">&copy; 2026 . Tous droits réservés a <a href="https://luhamcode.com/">https://luhamcode.com</a> <span className="credits">Design by <a href="https://www.facebook.com/share/1Cgrh1dvau/?mibextid=wwXIfr" target="_blank">LuhamCode</a></span></p>
@@ -143,4 +144,5 @@ function login() {
   );
 }
 
-export default login;
+// 3. Export du composant modifié avec sa majuscule
+export default Login;

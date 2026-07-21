@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios"; 
 import { useNavigate } from "react-router-dom"; // Import nécessaire pour la redirection
 
-const API_URL = "http://localhost:3000";
+const API_URL = "https://onrender.com";
 
 function Produits() {
   const companyName = localStorage.getItem("company_name") || "Mon Entreprise";

@@ -7,7 +7,7 @@ function Register() {
     company_name: "", // Ira dans companies.name et users.company_name
     company_gln: "",  // Ira dans companies.gln
     email: "",        // Table users
-    password: "",      // Table users
+    password: "",     // Table users
     user_id: ""
   });
 
@@ -18,9 +18,8 @@ function Register() {
     e.preventDefault();
 
     try {
-      // Envoi des données au backend
-      // Le backend devra créer la Company ET l'User
-      const res = await axios.post("http://localhost:3000/register", {
+      // 1. Appel dynamique configuré sur la route `/register` de votre backend Render
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/register`, {
         name: formData.company_name, // Correspond à companies.name
         gln: formData.company_gln,   // Correspond à companies.gln
         email: formData.email,
@@ -77,8 +76,6 @@ function Register() {
               />
             </div>
 
-            
-
             {/* SECTION ADMIN */}
             <div className="form-input">
               <input 
@@ -101,7 +98,6 @@ function Register() {
               />
             </div>
           
-
           {message.text && (
             <div className={`mt-4 p-3 rounded-lg text-xs font-bold text-center ${
               message.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
@@ -113,7 +109,7 @@ function Register() {
          <div className="lesButton">
            
           <button type="submit"  className="submit ">
-           Créer  compte 
+           Créer compte 
           </button>
 
           <button 
@@ -130,10 +126,11 @@ function Register() {
         
       </div>
        <div className="bas-register">
-        <span className="slogan">“<strong className="luham">LuhamCode</strong> – L’innovation  digitale qui rapproche le monde.”</span>
-        <a className="btn-success resp-1" href="/contact" role="button"> Contactez-nous</a>
+        <span className="slogan">“<strong className="luham">LuhamCode</strong> – L’innovation digitale qui rapproche le monde.”</span>
+        {/* 2. Correction de l'URL relative en URL absolue */}
+        <a className="btn-success resp-1" href="https://luhamcode.com" role="button"> Contactez-nous</a>
         <div>
-         <p className="droit">&copy; 2026 . Tous droits réservés a <a href="https://nesteline.alwaysdata.net">https://nesteline.alwaysdata.net</a> <span class="credits">Design by <a href="https://www.facebook.com/share/1Cgrh1dvau/?mibextid=wwXIfr" target="_blank">LuhamCode</a></span></p>
+         <p className="droit">&copy; 2026 . Tous droits réservés a <a href="https://nesteline.alwaysdata.net">https://nesteline.alwaysdata.net</a> <span className="credits">Design by <a href="https://www.facebook.com/share/1Cgrh1dvau/?mibextid=wwXIfr" target="_blank">LuhamCode</a></span></p>
          </div>
         </div>
     </div>
@@ -141,5 +138,3 @@ function Register() {
 }
 
 export default Register;
-  
- 

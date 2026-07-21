@@ -64,7 +64,7 @@ function Colis() {
     const chargerProduit = async () => {
       if (!formData.produitId) return;
       try {
-        const res = await axios.get(`http://localhost:3000/produits/${formData.produitId}`);
+        const res = await axios.get(`https://onrender.com${formData.produitId}`);
         setFormData((prev) => ({
           ...prev,
           dest_gtin: res.data.gtin || prev.dest_gtin,
@@ -96,7 +96,7 @@ function Colis() {
     };
 
     try {
-      const res = await axios.post("http://localhost:3000/colis", dataToSend);
+      const res = await axios.post("https://onrender.com", dataToSend);
       setColisCree({ id: res.data.id, ...dataToSend });
       alert("Colis enregistré !");
     } catch (error) {
