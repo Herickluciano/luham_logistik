@@ -14,30 +14,41 @@ app.use(express.json());
 
 // Configuration CORS : Autorise votre frontend Hostinger et votre environnement local Vite
 const corsOptions = {
-  origin: ['https://luhamcode.com', 'http://localhost:5173'],
+  origin: ['https://luhamcode.com', 'https://luhamlogistik.luhamcode.com', 'http://localhost:5173'],
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
-// Connexion MySQL dynamique (Utilise DATABASE_URL sur Render, ou localhost en local)
-const db = mysql.createConnection(
-  process.env.DATABASE_URL || {
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "db-logistique"
-  }
-);
+// 1. Préparation de la configuration MySQL dynamique
+const dbConfig = process.env.DATABASE_URL || {
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "db-logistique"
+};
 
-db.connect((err) => {
-  if (err) {
-    console.error("Erreur connexion MySQL:", err.message);
-  } else {
-    console.log("Connexion MySQL établie avec succès !");
-  }
+// 2. Création du Pool de connexions (Anti-coupure réseau / ECONNRESET)
+const pool = mysql.createPool({
+  ...(typeof dbConfig === 'string' ? { uri: dbConfig } : dbConfig),
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
 
+// 3. Wrapper pour maintenir la compatibilité stricte avec votre code db.query actuel
+const db = {
+  query: (sql, params, callback) => {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    pool.query(sql, params, callback);
+  }
+};
 
+console.log("Pool de connexions MySQL configuré avec succès !");
 
 /* ======================
    AUTH : REGISTER
@@ -218,7 +229,7 @@ app.delete("/colis/:id", (req, res) => {
   });
 });
 
-// Écoute du serveur sur le port dynamique
+// Écoute du serveur sur le port dynamique de Render
 app.listen(PORT, () => {
   console.log(`Serveur Express opérationnel sur le port ${PORT}`);
 });
