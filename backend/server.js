@@ -5,24 +5,35 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const app = express();
-const SECRET = "LUHAMCODE_SECRET_KEY_99";
-const PORT = 3000;
 
-app.use(cors());
+// Variables de configuration dynamiques pour la production
+const SECRET = process.env.JWT_SECRET || "LUHAMCODE_SECRET_KEY_99";
+const PORT = process.env.PORT || 3000; 
+
 app.use(express.json());
 
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "db-logistique"
-});
+// Configuration CORS : Autorise votre frontend Hostinger et votre environnement local Vite
+const corsOptions = {
+  origin: ['https://luhamcode.com', 'http://localhost:5173'],
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
+// Connexion MySQL dynamique (Utilise DATABASE_URL sur Render, ou localhost en local)
+const db = mysql.createConnection(
+  process.env.DATABASE_URL || {
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "db-logistique"
+  }
+);
 
 db.connect((err) => {
   if (err) {
     console.error("Erreur connexion MySQL:", err.message);
   } else {
-    console.log("MySQL OK sur port 3306");
+    console.log("Connexion MySQL établie avec succès !");
   }
 });
 
@@ -43,7 +54,7 @@ app.post("/register", async (req, res) => {
       // 2. Créer l'entreprise (On insère seulement name et gln)
       db.query("INSERT INTO companies (name, gln, user_id) VALUES (?, ?, ?)", [name, gln, user_id], (err2, companyResult) => {
         if (err2) {
-            console.error(err2); // Pour voir l'erreur exacte dans ta console terminal
+            console.error(err2); 
             return res.status(500).json({ error: "Erreur création entreprise dans MySQL" });
         }
         
@@ -65,14 +76,12 @@ app.post("/register", async (req, res) => {
   });
 });
 
-
 /* ======================
    AUTH : LOGIN
 ====================== */
 app.post("/", (req, res) => {
   const { email, password } = req.body;
   
-  // On fait une JOINTURE pour avoir le vrai nom de la société
   const sql = `
     SELECT users.*, companies.name as real_company_name 
     FROM users 
@@ -91,7 +100,7 @@ app.post("/", (req, res) => {
     res.json({ 
       token, 
       company_id: user.company_id, 
-      company_name: user.real_company_name // On utilise le nom qui vient de la table companies
+      company_name: user.real_company_name 
     });
   });
 });
@@ -102,7 +111,6 @@ app.post("/", (req, res) => {
 // AJOUTER PRODUIT
 app.post("/produits", (req, res) => {
   const { nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id } = req.body;
-  // Utilisation de la table 'produit' (sans S) comme dans ton descriptif
   db.query(
     "INSERT INTO produits (nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     [nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id],
@@ -112,6 +120,8 @@ app.post("/produits", (req, res) => {
     }
   );
 });
+
+// RÉCUPÉRER TOUS LES PRODUITS D'UNE ENTREPRISE
 app.get("/produits", (req, res) => {
   const { company_id } = req.query;
 
@@ -123,16 +133,14 @@ app.get("/produits", (req, res) => {
     (err, result) => {
       if (err) {
         console.log("ERREUR MYSQL :", err);
-        return res.status(500).json({
-          error: err.message
-        });
+        return res.status(500).json({ error: err.message });
       }
-
       res.json(result);
     }
   );
 });
 
+// RÉCUPÉRER UN PRODUIT UNIQUE
 app.get("/produits/:id", (req, res) => {
   db.query("SELECT * FROM produits WHERE id = ?", [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
@@ -141,7 +149,7 @@ app.get("/produits/:id", (req, res) => {
   });
 });
 
-// MODIFIER (PUT)
+// MODIFIER UN PRODUIT
 app.put("/produits/:id", (req, res) => {
   const { id } = req.params;
   const { nom, gtin, description, dimensions, poids_net } = req.body;
@@ -156,7 +164,7 @@ app.put("/produits/:id", (req, res) => {
   );
 });
 
-// SUPPRIMER (DELETE)
+// SUPPRIMER UN PRODUIT
 app.delete("/produits/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM produits WHERE id = ?", [id], (err, result) => {
@@ -168,7 +176,7 @@ app.delete("/produits/:id", (req, res) => {
 /* ======================
    COLIS : CRUD
 ====================== */
-
+// CRÉER UN COLIS
 app.post("/colis", (req, res) => {
   const { produit_id, destinataire_nom, destinataire_adresse, destinataire_gln, destinataire_gtin } = req.body;
   db.query(
@@ -180,6 +188,8 @@ app.post("/colis", (req, res) => {
     }
   );
 });
+
+// RÉCUPÉRER TOUS LES COLIS
 app.get("/colis", (req, res) => {
   db.query("SELECT * FROM colis ORDER BY id DESC", (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur récup colis" });
@@ -187,6 +197,7 @@ app.get("/colis", (req, res) => {
   });
 });
 
+// MODIFIER LE STATUT D'UN COLIS
 app.put("/colis/:id", (req, res) => {
   const { id } = req.params;
   const { statut } = req.body;
@@ -196,6 +207,7 @@ app.put("/colis/:id", (req, res) => {
   });
 });
 
+// SUPPRIMER UN COLIS
 app.delete("/colis/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM colis WHERE id = ?", [id], (err) => {
@@ -204,7 +216,7 @@ app.delete("/colis/:id", (req, res) => {
   });
 });
 
+// Écoute du serveur sur le port dynamique
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
-   console.log(`Serveur démarré sur  Network: http://172.20.10.8:5173/`);
+  console.log(`Serveur Express opérationnel sur le port ${PORT}`);
 });
