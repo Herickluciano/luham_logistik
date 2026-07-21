@@ -5,8 +5,9 @@ import { useReactToPrint } from "react-to-print";
 import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 
-// Fixation définitive de l'URL de votre backend Render
-const API_URL = "https://onrender.com";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 function Colis() {
   const navigate = useNavigate();
