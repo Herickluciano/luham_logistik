@@ -1,7 +1,17 @@
-Options -MultiViews
+Options -Indexes -MultiViews
 RewriteEngine On
 RewriteBase /
-RewriteRule ^index\.html$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+
+# 1. Forcer le bon type MIME directement pour le navigateur
+<IfModule mod_mime.c>
+    AddType text/javascript .js
+    AddType text/javascript .mjs
+</IfModule>
+
+# 2. Servir le fichier s'il existe réellement
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 3. Rediriger le reste vers index.html pour le routeur de votre SaaS
+RewriteRule ^ index.html [L]
