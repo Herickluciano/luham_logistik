@@ -129,7 +129,7 @@ function Login() {
             onClick={() => navigate("/register")}
            className="bas-logi " 
           >
-            Créer un compte Entreprise
+             Entreprise
           </p>
           </div>
         </form>

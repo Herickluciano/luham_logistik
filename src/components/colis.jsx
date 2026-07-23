@@ -143,10 +143,10 @@ function Colis() {
   };
 
   return (
-    <div className="p-10 bg-slate-100 min-h-screen flex flex-col lg:flex-row gap-10 notranslate">
+    <div className="page p-10 bg-slate-100 min-h-screen flex flex-col lg:flex-row gap-10 notranslate">
       
       {/* FORMULAIRE */}
-      <div className="w-full lg:w-1/3 no-print">
+      <div className=" w-full lg:w-1/3 no-print">
         <div className="col">
           <div className="luham">
             <h1>
@@ -161,11 +161,11 @@ function Colis() {
               <strong className="luham">Luham Logistik S.R.L</strong><br/> 
               <span>Nous sommes l’expertise double.</span>
             </p>
-            <h3 className="compte-login">Expédition et Étiquette</h3>
+            <h3 className="compte-login">Espace d'afficharge de l' étiquette</h3>
           </div>
         </div>
         
-        <div className="p-8 rounded-b-2xl shadow-xl space-y-4 ">
+        <div className="colis-1 cmd-6 p-8 rounded-b-2xl shadow-xl space-y-4 ">
           <form onSubmit={handleSubmit} className="form-colis">
             <div className="flex gap-2">
               <input
@@ -193,13 +193,13 @@ function Colis() {
             </div>
             
             {formData.produit_nom ? (
-              <div className="p-2 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+              <div className="detecte p-2 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
                 <span>Produit détecté : </span><b>{formData.produit_nom}</b>
               </div>
             ) : null}
 
             <input type="text" placeholder="Nom destinataire" className="w-full p-3 border rounded-xl mt-2" value={formData.dest_nom} onChange={(e) => setFormData({ ...formData, dest_nom: e.target.value })} required />
-            <textarea placeholder="Adresse" className="text-col w-full p-3 border rounded-xl mt-2" value={formData.dest_adresse} onChange={(e) => setFormData({ ...formData, dest_adresse: e.target.value })} required />
+            <textarea placeholder="Adresse & contact" className="text-col w-full p-3 border rounded-xl mt-2" value={formData.dest_adresse} onChange={(e) => setFormData({ ...formData, dest_adresse: e.target.value })} required />
             <input type="text" placeholder="GTIN" className="w-full p-3 border rounded-xl mt-2" value={formData.dest_gtin} onChange={(e) => setFormData({ ...formData, dest_gtin: e.target.value })} />
             
             <button type="submit" className="btn btn-success border rounded bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors">Générer l'étiquette</button>
@@ -209,7 +209,7 @@ function Colis() {
 {/* APERCU ETIQUETTE */}
       <div className="flex-1 flex justify-center items-start">
         {colisCree ? (
-          <div className="flex flex-col items-center">
+          <div className="etik-col flex flex-col items-center">
             
             {/* L'ÉTITIQUETTE À IMPRIMER / TÉLÉCHARGER */}
             <div 
@@ -226,7 +226,7 @@ function Colis() {
               
               <div className="dest w-full grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-dest uppercase font-bold text-gray-500 text-xs">Destinataire</p>
+                  <p className="text-dest uppercase font-bold text-gray-500 text-xs">Client (Destination)</p>
                   <div className="detaille">
                     <p className="detail font-bold text-lg text-slate-800">{colisCree.destinataire_nom}</p>
                     <p className="detail text-sm text-slate-600">{colisCree.destinataire_adresse}</p>
@@ -260,7 +260,7 @@ function Colis() {
             </div>
 
             {/* ACTION BUTTONS (Masqués à l'impression) */}
-            <div className="btn-groupe mt-4 flex gap-4 no-print">
+            <div className="zone-btn btn-groupe mt-4 flex gap-4 no-print">
               <button 
                 onClick={handlePrint} 
                 className="btn btn-success border rounded bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors"
@@ -285,11 +285,11 @@ function Colis() {
           
         ) : (
           <div className="text-inf border-4 border-dashed border-slate-300 p-20 rounded-2xl flex flex-col items-center italic">
-            Saisissez un ID produit et les infos destinataire <br/>
+            {/* <h3 className="titre-col">Saisissez un ID produit et les infos destinataire </h3><br/> */}
              <button 
             type="button"
             onClick={() => navigate("/produits")}
-            className="btn btn-success border rounded bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors" >
+            className="retour btn btn-success border rounded bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors" >
             Retour a liste des produits
           </button>
           </div>

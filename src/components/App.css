@@ -47,6 +47,7 @@
  left:39%
 }
 .page  {
+  position: relative;
   font-family: 'Montserrat', sans-serif;
   background-color: #333; 
   color: aliceblue;
@@ -57,6 +58,7 @@
   position: relative;
   padding: 0;
   margin: 0;
+  top: 6px;
 }
 h1{
   font-family: 'Montserrat', sans-serif;
@@ -141,7 +143,7 @@ img {
 .text-col {
   position: relative;
    margin : auto;
- top: 11px!important;
+ top: -14px!important;
 }
 .text-inf {
   position: relative;
@@ -231,17 +233,32 @@ img {
    font-size: 16px;
 }
 .forme {
-  position: relative;
+  position: absolute;
   height: 460px !important;
   width: 350px!important;
   border: 2px dashed hsl(0, 90%, 43%); 
   margin: auto;
-  top: 29px !important;
+  top: 180px !important;
+  left: 560px;
   font-style: italic;
   font-size: 18px;
   color:#0f0202;
 }
+.zone-btn {
+  position: absolute!important;
+ display: grid;
+ align-items: baseline;
+ left: 970px;
+ top: 235px!important;
+}
 
+.retour {
+  position: absolute!important;
+ display: grid;
+ align-items: baseline;
+ left: 970px;
+ top: -465px!important;
+}
 .col {
   position: relative;
    width: 500px;
@@ -659,4 +676,24 @@ textarea{
   text-align:center;
  padding:15px;
  margin:15px;
+}
+.colis-1{
+  position:relative;
+  width: 80vh;
+  text-align:left;
+ padding:15px;
+ margin:15px;
+ top: -67px;
+}
+.titre-col{
+  position:absolute;
+  top: -560px;
+  font-size: 14px;
+  left: 118px; 
+}
+
+.detecte{
+  position:relative;
+  padding:15px;
+ margin:15px; 
 }
