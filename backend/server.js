@@ -17,29 +17,29 @@ app.use(express.json());
 ====================== */
 const allowedOrigins = [
   'https://luhamcode.com', 
-  'https://luhamcode.com', 
-  'https://onrender.com',  
+  'https://luhamlogistik.luhamcode.com', // AJOUTÉ : Votre vrai site de production
+  'https://onrender.com',  // AJOUTÉ : Votre adresse Render Frontend
   'http://localhost:5173'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Autorise les requêtes sans origine (comme Postman ou les requêtes serveur à serveur)
+    // Autorise les requêtes sans origine (comme Postman ou requêtes serveur à serveur)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      // Conseil : affichez l'origine bloquée dans les logs pour faciliter le débogage
       console.log("Origine bloquée par CORS :", origin);
       callback(new Error('Bloqué par la politique CORS de LUHAMCODE'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200,
-  preflightContinue: false // CORRIGÉ : Gère automatiquement et directement les requêtes de pré-vérification OPTIONS
+  optionsSuccessStatus: 200
 }));
-
-// CORRIGÉ : La ligne app.options(...) qui provoquait le crash a été complètement supprimée d'ici.
+// Gérer explicitement les requêtes de pré-vérification (Preflight) pour toutes les routes
+app.options('(.*)', cors());
 
 // 1. Préparation de la configuration MySQL dynamique
 const dbConfig = process.env.DATABASE_URL || {
@@ -49,7 +49,7 @@ const dbConfig = process.env.DATABASE_URL || {
   database: "db-logistique"
 };
 
-// 2. Création du Pool de connexions
+// 2. Création du Pool de connexions (Anti-coupure réseau / ECONNRESET)
 const pool = mysql.createPool({
   ...(typeof dbConfig === 'string' ? { uri: dbConfig } : dbConfig),
   waitForConnections: true,
@@ -59,7 +59,7 @@ const pool = mysql.createPool({
   keepAliveInitialDelay: 10000
 });
 
-// 3. Wrapper pour maintenir la compatibilité
+// 3. Wrapper pour maintenir la compatibilité stricte avec votre code db.query actuel
 const db = {
   query: (sql, params, callback) => {
     if (typeof params === 'function') {
@@ -78,6 +78,7 @@ console.log("Pool de connexions MySQL configuré avec succès !");
 app.post("/register", async (req, res) => {
   const { name, gln, email, password, user_id } = req.body;
 
+  // 1. Vérifier si l'utilisateur existe déjà
   db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur BDD Recherche" });
     if (result.length > 0) return res.status(400).json({ error: "Email déjà utilisé" });
@@ -85,6 +86,7 @@ app.post("/register", async (req, res) => {
     try {
       const hash = await bcrypt.hash(password, 10);
       
+      // 2. Créer l'entreprise (On insère seulement name et gln)
       db.query("INSERT INTO companies (name, gln, user_id) VALUES (?, ?, ?)", [name, gln, user_id], (err2, companyResult) => {
         if (err2) {
             console.error(err2); 
@@ -92,8 +94,9 @@ app.post("/register", async (req, res) => {
         }
         
         const companyId = companyResult.insertId;
+
+        // 3. Créer l'utilisateur lié à cette entreprise (CORRIGÉ : Retrait du user_id en trop dans le tableau)
         const sqlUser = "INSERT INTO users (email, password, company_id, company_name) VALUES (?, ?, ?, ?)";
-        
         db.query(sqlUser, [email, hash, companyId, name], (err3) => {
           if (err3) {
               console.error(err3);
@@ -140,6 +143,7 @@ app.post("/", (req, res) => {
 /* ======================
    PRODUITS : CRUD
 ====================== */
+// AJOUTER PRODUIT
 app.post("/produits", (req, res) => {
   const { nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id } = req.body;
   db.query(
@@ -152,18 +156,26 @@ app.post("/produits", (req, res) => {
   );
 });
 
+// RÉCUPÉRER TOUS LES PRODUITS D'UNE ENTREPRISE
 app.get("/produits", (req, res) => {
   const { company_id } = req.query;
+
+  console.log("company_id =", company_id);
+
   db.query(
     "SELECT * FROM produits WHERE company_id = ? ORDER BY id DESC",
     [company_id],
     (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        console.log("ERREUR MYSQL :", err);
+        return res.status(500).json({ error: err.message });
+      }
       res.json(result);
     }
   );
 });
 
+// RÉCUPÉRER UN PRODUIT UNIQUE
 app.get("/produits/:id", (req, res) => {
   db.query("SELECT * FROM produits WHERE id = ?", [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
@@ -172,9 +184,11 @@ app.get("/produits/:id", (req, res) => {
   });
 });
 
+// MODIFIER UN PRODUIT
 app.put("/produits/:id", (req, res) => {
   const { id } = req.params;
   const { nom, gtin, description, dimensions, poids_net } = req.body;
+
   db.query(
     "UPDATE produits SET nom=?, gtin=?, description=?, dimensions=?, poids_net=? WHERE id=?",
     [nom, gtin, description, dimensions, poids_net, id],
@@ -185,6 +199,7 @@ app.put("/produits/:id", (req, res) => {
   );
 });
 
+// SUPPRIMER UN PRODUIT
 app.delete("/produits/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM produits WHERE id = ?", [id], (err, result) => {
@@ -196,6 +211,7 @@ app.delete("/produits/:id", (req, res) => {
 /* ======================
    COLIS : CRUD
 ====================== */
+// CRÉER UN COLIS
 app.post("/colis", (req, res) => {
   const { produit_id, destinataire_nom, destinataire_adresse, destinataire_gln, destinataire_gtin } = req.body;
   db.query(
@@ -208,6 +224,7 @@ app.post("/colis", (req, res) => {
   );
 });
 
+// RÉCUPÉRER TOUS LES COLIS
 app.get("/colis", (req, res) => {
   db.query("SELECT * FROM colis ORDER BY id DESC", (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur récup colis" });
@@ -215,6 +232,7 @@ app.get("/colis", (req, res) => {
   });
 });
 
+// MODIFIER LE STATUT D'UN COLIS
 app.put("/colis/:id", (req, res) => {
   const { id } = req.params;
   const { statut } = req.body;
@@ -224,15 +242,16 @@ app.put("/colis/:id", (req, res) => {
   });
 });
 
+// SUPPRIMER UN COLIS
 app.delete("/colis/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM colis WHERE id = ?", [id], (err) => {
-    if (err) return res.status(500).json({ error: "Erreur SQL Delete" });
+    if (err) return res.status(500).json({ error: "Erreur suppression colis" });
     res.json({ message: "Colis supprimé" });
   });
 });
 
-// ÉCOUTE DU SERVEUR
+// Écoute du serveur sur le port dynamique de Render
 app.listen(PORT, () => {
-  console.log(`Serveur démarré avec succès sur le port ${PORT}`);
+  console.log(`Serveur Express opérationnel sur le port ${PORT}`);
 });
