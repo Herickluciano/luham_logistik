@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom"; 
 
 // Utilisation de l'URL dynamique pour correspondre à votre configuration
-const API_URL = import.meta.env.VITE_API_URL || "https://votre-nom-d-app.onrender.com"; 
+const API_URL = import.meta.env.VITE_API_URL || "https://onrender.com"; 
 
 function AjouterProduit() {
   const navigate = useNavigate();
@@ -207,5 +207,7 @@ function AjouterProduit() {
   );
 }
 
-// CORRIGÉ : Seul et unique export par défaut avec la majuscule standard
+const ajouterProduit = AjouterProduit; 
+window.ajouterProduit = AjouterProduit;
+
 export default AjouterProduit;
