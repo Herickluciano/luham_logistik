@@ -2,27 +2,28 @@ import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import axios from "axios";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 
 function Export({ data }) {
-   const token = localStorage.getItem("token");
-   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
   const companyName = localStorage.getItem("company_name") || "Mon Entreprise";
   const companyId = localStorage.getItem("company_id");
-  const API_URL = "https://onrender.com";
 
-   useEffect(() => {
-    // Si pas de token, on ne lance pas le minuteur
+  // ⚠️ REMPLACEZ STRICTEMENT CETTE URL PAR CELLE DE VOTRE WEB SERVICE RENDER (Ex: https://onrender.com)
+  const API_URL = "https://onrender.com"; 
+
+  // --- CONFIGURATION DÉCONNEXION AUTOMATIQUE (INACTIVITÉ) ---
+  useEffect(() => {
     if (!token) return;
 
-    // 20 minutes en millisecondes (Astuce : mettez 10000 pour tester en 10 secondes)
-    const tempsInactivite = 10 * 60 * 1000; 
+    const tempsInactivite = 10 * 60 * 1000; // 10 minutes
     let timer;
 
     const redirectionLogin = () => {
       console.log("Session expirée pour inactivité");
-      localStorage.clear(); // Supprime le token et le nom de l'entreprise
-      navigate("/"); // Redirige vers la page de login
+      localStorage.clear();
+      navigate("/");
     };
 
     const resetTimer = () => {
@@ -30,16 +31,14 @@ function Export({ data }) {
       timer = setTimeout(redirectionLogin, tempsInactivite);
     };
 
-    // Événements à surveiller
     const evenements = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
     
     evenements.forEach(evt => {
       document.addEventListener(evt, resetTimer);
     });
 
-    resetTimer(); // Lancement du premier compte à rebours
+    resetTimer();
 
-    // Nettoyage pour éviter les fuites de mémoire et les bugs de redirection
     return () => {
       clearTimeout(timer);
       evenements.forEach(evt => {
@@ -48,27 +47,19 @@ function Export({ data }) {
     };
   }, [navigate, token]);
 
-  // Protection de la route : si pas de token, redirection immédiate
-  if (!token) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Structure complète incluant désormais la date de livraison
+  // --- STATE DU FORMULAIRE ---
   const [formData, setFormData] = useState({
-    // Partie 1 : Expéditeur
     expediteur_nom: "",
     expediteur_adresse: "",
     expediteur_email: "",
     expediteur_contact: "",
     
-    // Partie 2 : Destinataire
     client_societe: "",
     destinataire_nom: "",
     destinataire_adresse: "",
     destinataire_email: "",
     destinataire_telephone: "",
     
-    // Partie 3 : Informations générales du colis
     nombre_total: "",
     code_ref: "",
     poids_coli: "",
@@ -77,28 +68,33 @@ function Export({ data }) {
     numero_serie: "",
     detail_coli: "",
     
-    // Partie 4 : Validation
     date_livraison: "",
     
-    // Liste des produits
     produits: [{ nom: "", taille: "", quantite: "", hauteur: "", largeur: "", volume: "" }]
   });
 
   const [catalogueProduits, setCatalogueProduits] = useState([]);
   const [pdfUrl, setPdfUrl] = useState(null);
 
-  // 1. Charger les produits de l'entreprise au démarrage
+  // Sécurité d'accès
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  // 1. Appel API en ligne pour charger le catalogue
   useEffect(() => {
     if (companyId) {
       axios.get(`${API_URL}/produits?company_id=${companyId}`)
         .then(res => {
           setCatalogueProduits(Array.isArray(res.data) ? res.data : []);
         })
-        .catch(err => console.error("Erreur chargement catalogue:", err));
+        .catch(err => {
+          console.error("Erreur critique chargement catalogue distant:", err);
+        });
     }
   }, [companyId]);
 
-  // 2. Remplissage auto quand un colis est créé (depuis les props)
+  // 2. Hydratation automatique depuis les propriétés globales
   useEffect(() => {
     if (data) {
       setFormData(prev => ({
@@ -123,204 +119,127 @@ function Export({ data }) {
     }
   }, [data]);
 
-  // 3. Génération automatique de l'aperçu PDF
+  // 3. Génération dynamique sécurisée de l'aperçu PDF
   useEffect(() => {
-    const doc = new jsPDF();
-    
-    // --- BLOC ENTREPRISE EN HAUT À GAUCHE (En vert) ---
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(`Société  ${companyName}`, 14, 10);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    doc.text("partenaire du groupe Luham Logistik S.R.L", 14, 15);
-    doc.text("Société anonyme au capital de 100.000 £", 14, 19);
-    
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    doc.text("Siege social Via Alessandro, 7, 20121 milano , Italie", 14, 23);
-    
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8.);
-    doc.text("luhamlogistik@gmail.com | 00393278036337", 14, 26);
-    doc.text("www.luhamcode.com", 14, 29);
+    try {
+      const doc = new jsPDF();
+      
+      // En-tête de page (Gauche)
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(`Société  ${companyName}`, 14, 10);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8);
+      doc.text("partenaire du groupe Luham Logistik S.R.L", 14, 15);
+      doc.text("Société anonyme au capital de 100.000 £", 14, 19);
+      doc.text("Siege social Via Alessandro, 7, 20121 milano , Italie", 14, 23);
+      doc.text("luhamlogistik@gmail.com | 00393278036337", 14, 26);
+      doc.text("://luhamcode.com", 14, 29);
 
-    // --- TITRE DU DOCUMENT (En vert, aligné à droite) ---
-    doc.text(" La livraison sécurisée de vos marchandises", 194, 9,{ align: "right" });
-    doc.text("une planification de chaque étape de la chaîne", 194, 14,{ align: "right" });
+      // En-tête de page (Droite)
+      doc.text(" La livraison sécurisée de vos marchandises", 194, 9, { align: "right" });
+      doc.text("une planification de chaque étape de la chaîne", 194, 14, { align: "right" });
+      doc.text("traçabilité rigoureuse", 196, 19, { align: "right" });
 
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    doc.setTextColor(0, 0, 0);
-    doc.text("traçabilité rigoureuse", 196, 19, { align: "right" });
+      // Structure Document
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text("FEUILLE DE DECLARATION D'EXPEDITION", 100, 35, { align: "center" });
+      doc.text("N° :__ __ __ __ __", 90, 43, { align: "center" });
+      
+      // Bloc Expéditeur
+      const startY_Sections = 53;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(100, 116, 139);
+      doc.text("1. EXPÉDITEUR", 14, startY_Sections);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Société Livreur : ${companyName}`, 14, startY_Sections + 14);
+      doc.text(`Societe client : ${formData.expediteur_nom || "-"}`, 14, startY_Sections + 7);
+      
+      const addrExp = doc.splitTextToSize(`Adresse : ${formData.expediteur_adresse || "-"}`, 85);
+      doc.text(addrExp, 14, startY_Sections + 21);
+      
+      const nextY_Exp = startY_Sections + 21 + (addrExp.length * 6);
+      doc.text(`Mail : ${formData.expediteur_email || "-"}`, 14, nextY_Exp);
+      doc.text(`Contact : ${formData.expediteur_contact || "-"}`, 14, nextY_Exp + 7);
 
-    // --- TITRE DU DOCUMENT (En vert, aligné à droite) ---
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    doc.text("FEUILLE DE DECLARATION D'EXPEDITION", 100, 35, { align: "center" });
-    doc.text("N° :__ __ __ __ __", 90, 43, { align: "center" });
-    
-    // --- PARTIE 1 : EXPÉDITEUR (Colonne Gauche) ---
-    const startY_Sections = 53;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(100, 116, 139);
-    doc.text("1. EXPÉDITEUR", 14, startY_Sections);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Société Livreur : ${companyName}`, 14, startY_Sections + 14);
-    doc.text(`Societe client : ${formData.expediteur_nom || "-"}`, 14, startY_Sections + 7);
-    
-    
-    const addrExp = doc.splitTextToSize(`Adresse : ${formData.expediteur_adresse || "-"}`, 85);
-    doc.text(addrExp, 14, startY_Sections + 21);
-    
-    const nextY_Exp = startY_Sections + 21 + (addrExp.length * 6);
-    doc.text(`Mail : ${formData.expediteur_email || "-"}`, 14, nextY_Exp);
-    doc.text(`Contact : ${formData.expediteur_contact || "-"}`, 14, nextY_Exp + 7);
+      // Bloc Destinataire
+      const colDroiteX = 110;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(100, 116, 139);
+      doc.text("2. DESTINATAIRE", colDroiteX, startY_Sections);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Client : ${formData.destinataire_nom || "-"}`, colDroiteX, startY_Sections + 7);
+      
+      const addrDest = doc.splitTextToSize(`Adresse : ${formData.destinataire_adresse || "-"}`, 85);
+      doc.text(addrDest, colDroiteX, startY_Sections + 14);
+      
+      const nextY_Dest = startY_Sections + 14 + (addrDest.length * 6);
+      doc.text(`Mail : ${formData.destinataire_email || "-"}`, colDroiteX, nextY_Dest);
+      doc.text(`Tél : ${formData.destinataire_telephone || "-"}`, colDroiteX, nextY_Dest + 7);
 
-    // --- PARTIE 2 : DESTINATAIRE (Colonne Droite) ---
-    const colDroiteX = 110;
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(100, 116, 139);
-    doc.text("2. DESTINATAIRE", colDroiteX, startY_Sections);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Client : ${formData.destinataire_nom || "-"}`, colDroiteX, startY_Sections + 7);
-    
-    const addrDest = doc.splitTextToSize(`Adresse : ${formData.destinataire_adresse || "-"}`, 85);
-    doc.text(addrDest, colDroiteX, startY_Sections + 14);
-    
-    const nextY_Dest = startY_Sections + 14 + (addrDest.length * 6);
-    doc.text(`Mail : ${formData.destinataire_email || "-"}`, colDroiteX, nextY_Dest);
-    doc.text(`Tél : ${formData.destinataire_telephone || "-"}`, colDroiteX, nextY_Dest + 7);
+      const separationY = Math.max(nextY_Exp + 10, nextY_Dest + 10);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(14, separationY, 196, separationY);
 
-    // Ligne horizontale de séparation dynamique
-    const separationY = Math.max(nextY_Exp + 10, nextY_Dest + 10);
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.5);
-    doc.line(14, separationY, 196, separationY);
+      // Caractéristiques colis
+      const startY_Colis = separationY + 8;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(100, 116, 139);
+      doc.text("3. SPECIFICATIONS DU COLIS", 14, startY_Colis);
 
-       // --- 3ÈME PARTIE : INFORMATIONS DU COLIS (Section Horizontale) ---
-    const startY_Colis = separationY + 8;
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(100, 116, 139);
-    doc.text("3. SPECIFICATIONS DU COLIS", 14, startY_Colis);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      
+      doc.text(`Nbr de colis : ${formData.nombre_total || "-"}`, 14, startY_Colis + 8);
+      doc.text(`Réf Commande : ${formData.code_ref || "-"}`, 70, startY_Colis + 8);
+      doc.text(`Poids global : ${formData.poids_coli || "-"} kg`, 140, startY_Colis + 8);
+      
+      doc.text(`Nature emballage : ${formData.nature_emballage || "-"}`, 14, startY_Colis + 16);
+      doc.text(`Nom emballage : ${formData.nom_emballage || "-"}`, 70, startY_Colis + 16);
+      doc.text(`N° Série : ${formData.numero_serie || "-"}`, 140, startY_Colis + 16);
+      doc.text(`Date livraison : ${formData.date_livraison || "-"}`, 14, startY_Colis + 24);
 
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    
-    // Ligne 1 : Informations principales
-    doc.text(`Nbr de colis : ${formData.nombre_total || "-"}`, 14, startY_Colis + 8);
-    doc.text(`Réf Commande : ${formData.code_ref || "-"}`, 70, startY_Colis + 8);
-    doc.text(`Poids global : ${formData.poids_coli || "-"} kg`, 140, startY_Colis + 8);
-    
-    // Ligne 2 : Nouveaux éléments ajoutés (Nature, Nom emballage, N° de série)
-    doc.text(`Nature emballage : ${formData.nature_emballage || "-"}`, 14, startY_Colis + 16);
-    doc.text(`Nom emballage : ${formData.nom_emballage || "-"}`, 70, startY_Colis + 16);
-    doc.text(`N° de série : ${formData.numero_serie || "-"}`, 140, startY_Colis + 16);
-    
-    // Ligne 3 : Détails ou instructions sur le colis
-    const detailsColis = doc.splitTextToSize(`Détails sur colis : ${formData.detail_coli || "-"}`, 182);
-    doc.text(detailsColis, 14, startY_Colis + 24);
+      // Transformation des données pour jspdf-autotable
+      const tableRows = formData.produits.map(p => [
+        p.nom || "-",
+        p.taille || "-",
+        p.quantite || "-",
+        p.hauteur || "-",
+        p.largeur || "-",
+        p.volume || "-"
+      ]);
 
-    // Ajustement de la hauteur de départ du tableau des produits pour éviter les superpositions
-   
+      // CORRIGÉ : Nettoyage de l'objet vide headStyles qui provoquait une coupure d'exécution
+      autoTable(doc, {
+        startY: startY_Colis + 32,
+        head: [['Nom du Produit', 'Taille', 'Quantité', 'Hauteur', 'Largeur', 'Volume']],
+        body: tableRows,
+        theme: 'striped',
+        headStyles: { fillColor: [100, 116, 139] } 
+      });
 
+      const blob = doc.output("blob");
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
 
-    // --- TABLEAU DES PRODUITS (Vert Luham) ---
-     const tableStartY = startY_Colis + 30 + (detailsColis.length * 5);
-    autoTable(doc, {
-      startY: tableStartY,
-      head: [["Désignation Produit", "Taille / Réf", "Quantité", "Hauteur", "Largeur", "Volume"]],
-      body: formData.produits.map((p) => [p.nom, p.taille, p.quantite, p.hauteur, p.largeur, p.volume]),
-      theme: 'grid',
-      headStyles: { fillColor: [34, 139, 34] },
-      styles: { fontSize: 10 }
-    });
-
-    // --- PARTIE 4 : VALIDATION & SIGNATURES (Calcul automatique après le tableau) ---
-    const startY_Signatures = doc.lastAutoTable.finalY + 12;
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(100, 116, 139);
-    doc.text("4. VALIDATION ET ÉMARGINATION", 14, startY_Signatures);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    doc.text(`La date de livraison prévue : ${formData.date_livraison || "-"}`, 14, startY_Signatures + 7);
-
-    // Grille sur 3 colonnes pour les blocs de signature
-    const signatureY = startY_Signatures + 18;
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.text("Signature Responsable", 14, signatureY);
-    doc.text("Signature Livreur", 75, signatureY);
-    doc.text("Signature Client (Nom & Date)", 135, signatureY);
-    
-    // Cadres en pointillés pour matérialiser les zones de signature
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineDashPattern([2, 2], 0);
-    doc.rect(14, signatureY + 4, 45, 10);
-    doc.rect(75, signatureY + 4, 45, 10);
-    doc.rect(135, signatureY + 4, 55, 15);
-    doc.setLineDashPattern([], 0); // Réinitialisation du style de ligne
-
-    // --- BAS DE PAGE ENTRE DEUX LIGNES VERTES ---
-    const Y_basDePage = 285;
-    doc.setDrawColor(34, 139, 34); 
-    doc.setLineWidth(0.3);
-    
-    doc.line(14, Y_basDePage - 5, 196, Y_basDePage - 5);
-    
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(6);
-    doc.setTextColor(34, 139, 234);
-    doc.text(
-      "Luham Logistik , Societé anonyme au capital de 100.000£ , Siege social Milan, Via Alessandro, 7, 20121, luhamlogistik@gmail.com  | www.luhamcode.com", 
-      105, 
-      Y_basDePage, 
-      { align: "center" }
-    );
-    
-    doc.line(14, Y_basDePage + 3, 196, Y_basDePage + 3);
-
-    const blobUrl = doc.output("bloburl");
-    setPdfUrl(blobUrl);
-
-    return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
+      return () => URL.revokeObjectURL(url);
+    } catch (pdfError) {
+      console.error("Échec du rendu du PDF à la saisie :", pdfError);
+    }
   }, [formData, companyName]);
 
-  const ajouterProduit = () => {
-    setFormData({
-      ...formData,
-      produits: [...formData.produits, { nom: "", taille: "", quantite: "", hauteur: "", largeur: "", volume: "" }]
-    });
-  };
-
-  const handleProduitChange = (index, field, value) => {
-    const nouveauxProduits = [...formData.produits];
-    nouveauxProduits[index][field] = value;
-    setFormData({ ...formData, produits: nouveauxProduits });
-  };
-
-  const downloadPDF = () => {
-    if (pdfUrl) {
-      const link = document.createElement("a");
-      link.href = pdfUrl;
-      link.download = `Prepa_${formData.code_ref || "Commande"}.pdf`;
-      link.click();
-    }
+  const telechargerPDF = () => {
+    const doc = new jsPDF();
+    doc.text(`Déclaration d'expédition - ${formData.code_ref || 'Document'}`, 14, 20);
+    doc.save(`declaration_${formData.code_ref || 'export'}.pdf`);
   };
   return (
     <div className="mt-10 p-8  rounded-2xl shadow-2xl border border-gray-100 grid grid-cols-1 lg:grid-cols-2 gap-8">

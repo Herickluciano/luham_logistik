@@ -12,12 +12,32 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Configuration CORS : Autorise votre frontend Hostinger et votre environnement local Vite
-const corsOptions = {
-  origin: ['https://luhamcode.com', 'https://luhamlogistik.luhamcode.com', 'http://localhost:5173'],
+/* ======================
+   CONFIGURATION CORS CORRIGÉE
+====================== */
+const allowedOrigins = [
+  'https://luhamcode.com', 
+  'https://luhamcode.com', 
+  'http://localhost:5173'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Autorise les requêtes sans origine (comme Postman ou les requêtes serveur à serveur)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqué par la politique CORS de LUHAMCODE'));
+    }
+  },
+  credentials: true,
   optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+}));
+
+// Gérer explicitement les requêtes de pré-vérification (Preflight) pour toutes les routes
+app.options('*', cors());
 
 // 1. Préparation de la configuration MySQL dynamique
 const dbConfig = process.env.DATABASE_URL || {
@@ -73,9 +93,9 @@ app.post("/register", async (req, res) => {
         
         const companyId = companyResult.insertId;
 
-        // 3. Créer l'utilisateur lié à cette entreprise
+        // 3. Créer l'utilisateur lié à cette entreprise (CORRIGÉ : Retrait du user_id en trop dans le tableau)
         const sqlUser = "INSERT INTO users (email, password, company_id, company_name) VALUES (?, ?, ?, ?)";
-        db.query(sqlUser, [email, hash, companyId, name, user_id], (err3) => {
+        db.query(sqlUser, [email, hash, companyId, name], (err3) => {
           if (err3) {
               console.error(err3);
               return res.status(500).json({ error: "Erreur création utilisateur" });
