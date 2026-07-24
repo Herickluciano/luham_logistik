@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // CORRIGÉ : Retrait de l'import invalide 'data'
 
-const API_URL = "https://onrender.com";
+// CORRIGÉ : Utilisation de votre vraie adresse de production Render
+const API_URL = "https://votre-nom-d-app.onrender.com"; 
 
 function AjouterProduit() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ function AjouterProduit() {
   });
 
   // ======================
-  // GESTION INACTIVITÉ (20 MIN)
+  // GESTION INACTIVITÉ (10 MIN)
   // ======================
   useEffect(() => {
     if (!token) return;
@@ -187,7 +188,7 @@ function AjouterProduit() {
             onClick={() => navigate("/home")}
             className="submit-reg "
           >
-            Retour l'accueil
+            Retour à l'accueil
           </button>
         </div>
       </form>
