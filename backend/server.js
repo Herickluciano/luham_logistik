@@ -15,29 +15,34 @@ app.use(express.json());
 /* ======================
    CONFIGURATION CORS CORRIGÉE
 ====================== */
+/* ======================
+   CONFIGURATION CORS CORRIGÉE
+====================== */
 const allowedOrigins = [
   'https://luhamcode.com', 
-  'https://luhamlogistik.luhamcode.com', // AJOUTÉ : Votre vrai site de production
-  'https://onrender.com',  // AJOUTÉ : Votre adresse Render Frontend
+  'https://luhamcode.com', 
+  'https://onrender.com',  
   'http://localhost:5173'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Autorise les requêtes sans origine (comme Postman ou requêtes serveur à serveur)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      // Conseil : affichez l'origine bloquée dans les logs pour faciliter le débogage
       console.log("Origine bloquée par CORS :", origin);
       callback(new Error('Bloqué par la politique CORS de LUHAMCODE'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  preflightContinue: false // AJOUTÉ : Le middleware répond directement aux requêtes OPTIONS sans bloquer le routeur Express
 }));
+
+// CODE SUPPRIMÉ : L'appel à app.options() a été totalement retiré d'ici pour éviter le crash au démarrage.
+
 // Gérer explicitement les requêtes de pré-vérification (Preflight) pour toutes les routes
 app.options('(.*)', cors());
 
