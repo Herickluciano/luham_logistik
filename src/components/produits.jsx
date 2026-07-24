@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"; 
 import axios from "axios"; 
-import { useNavigate } from "react-router-dom"; // Import nécessaire pour la redirection
+import { useNavigate } from "react-router-dom"; 
 
-// Correction de l'URL pour cibler dynamiquement votre backend sur Render
+// URL dynamique pour cibler le backend
 const API_URL = import.meta.env.VITE_API_URL;
 
 function Produits() {
@@ -29,7 +29,7 @@ function Produits() {
 
     const redirectionLogin = () => {
       localStorage.clear();
-      navigate("/"); // Redirection vers login
+      navigate("/"); 
     };
 
     const resetTimer = () => {

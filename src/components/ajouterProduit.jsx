@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // CORRIGÉ : Retrait de l'import invalide 'data'
+import { useNavigate } from "react-router-dom"; 
 
-// CORRIGÉ : Utilisation de votre vraie adresse de production Render
-const API_URL = "https://votre-nom-d-app.onrender.com"; 
+// Utilisation de l'URL dynamique pour correspondre à votre configuration
+const API_URL = import.meta.env.VITE_API_URL || "https://votre-nom-d-app.onrender.com"; 
 
 function AjouterProduit() {
   const navigate = useNavigate();
@@ -207,4 +207,5 @@ function AjouterProduit() {
   );
 }
 
+// CORRIGÉ : Seul et unique export par défaut avec la majuscule standard
 export default AjouterProduit;
