@@ -39,7 +39,7 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 // Gérer explicitement les requêtes de pré-vérification (Preflight) pour toutes les routes
-app.options('*', cors());
+app.options('(.*)', cors());
 
 // 1. Préparation de la configuration MySQL dynamique
 const dbConfig = process.env.DATABASE_URL || {
