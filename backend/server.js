@@ -17,25 +17,27 @@ app.use(express.json());
 ====================== */
 const allowedOrigins = [
   'https://luhamcode.com', 
-  'https://luhamcode.com', 
+  'https://luhamlogistik.luhamcode.com', // AJOUTÉ : Votre vrai site de production
+  'https://onrender.com',  // AJOUTÉ : Votre adresse Render Frontend
   'http://localhost:5173'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Autorise les requêtes sans origine (comme Postman ou les requêtes serveur à serveur)
+    // Autorise les requêtes sans origine (comme Postman ou requêtes serveur à serveur)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      // Conseil : affichez l'origine bloquée dans les logs pour faciliter le débogage
+      console.log("Origine bloquée par CORS :", origin);
       callback(new Error('Bloqué par la politique CORS de LUHAMCODE'));
     }
   },
   credentials: true,
   optionsSuccessStatus: 200
 }));
-
 // Gérer explicitement les requêtes de pré-vérification (Preflight) pour toutes les routes
 app.options('*', cors());
 
