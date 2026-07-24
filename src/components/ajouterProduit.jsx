@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; 
+import { data, useNavigate } from "react-router-dom";
 
-// Utilisation de l'URL dynamique pour correspondre à votre configuration
-const API_URL = import.meta.env.VITE_API_URL || "https://onrender.com"; 
+const API_URL = "https://onrender.com";
 
 function AjouterProduit() {
   const navigate = useNavigate();
@@ -24,7 +23,7 @@ function AjouterProduit() {
   });
 
   // ======================
-  // GESTION INACTIVITÉ (10 MIN)
+  // GESTION INACTIVITÉ (20 MIN)
   // ======================
   useEffect(() => {
     if (!token) return;
@@ -188,7 +187,7 @@ function AjouterProduit() {
             onClick={() => navigate("/home")}
             className="submit-reg "
           >
-            Retour à l'accueil
+            Retour l'accueil
           </button>
         </div>
       </form>
@@ -206,8 +205,5 @@ function AjouterProduit() {
     </div>
   );
 }
-
-const ajouterProduit = AjouterProduit; 
-window.ajouterProduit = AjouterProduit;
 
 export default AjouterProduit;

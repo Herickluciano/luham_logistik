@@ -5,11 +5,6 @@ import axios from "axios";
 import { data, useNavigate } from "react-router-dom";
 
 function Export({ data }) {
-  const handleProduitChange = (index, field, value) => {
-  const nouveauxProduits = [...formData.produits];
-  nouveauxProduits[index][field] = value;
-  setFormData({ ...formData, produits: nouveauxProduits });
-};
    const token = localStorage.getItem("token");
    const navigate = useNavigate();
   const companyName = localStorage.getItem("company_name") || "Mon Entreprise";
@@ -313,7 +308,12 @@ function Export({ data }) {
     });
   };
 
-  
+  const handleProduitChange = (index, field, value) => {
+    const nouveauxProduits = [...formData.produits];
+    nouveauxProduits[index][field] = value;
+    setFormData({ ...formData, produits: nouveauxProduits });
+  };
+
   const downloadPDF = () => {
     if (pdfUrl) {
       const link = document.createElement("a");
@@ -479,34 +479,19 @@ function Export({ data }) {
         <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-2">
           {formData.produits.map((produit, index) => (
             <div key={index} className="grid grid-cols-12 gap-3 items-center">
-             {/* SÉLECTION DU PRODUIT */}
               <div className="col-span-6">
                 <select 
-                  className="w-full p-3 border rounded-xl bg-white text-black"
-                  value={produit.produit_id || ""}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const produitTrouve = catalogueProduits.find(p => String(p.id) === String(selectedId));
-                    
-                    if (produitTrouve) {
-                      // On met à jour l'ID, le nom complet et le GTIN de la ligne d'article
-                      handleProduitChange(index, "produit_id", produitTrouve.id);
-                      handleProduitChange(index, "nom", produitTrouve.nom);
-                      handleProduitChange(index, "gtin", produitTrouve.gtin);
-                    } else {
-                      handleProduitChange(index, "produit_id", "");
-                      handleProduitChange(index, "nom", "");
-                      handleProduitChange(index, "gtin", "");
-                    }
-                  }}
+                  className="w-full p-3 border rounded-xl bg-white"
+                  value={produit.nom}
+                  onChange={(e) => handleProduitChange(index, "nom", e.target.value)}
                 >
-                  <option value="">-- Sélectionner le produit à expédier --</option>
+                  <option value="">-- Sélectionner le produit à expedier --</option>
                   {catalogueProduits.map(p => (
-                    <option key={p.id} value={p.id}>{p.nom} (GTIN: {p.gtin})</option>
+                    <option key={p.id} value={p.nom}>{p.nom} (GTIN: {p.gtin})</option>
                   ))}
+                  {produit.nom && <option value={produit.nom}>Garder: {produit.nom}</option>}
                 </select>
               </div>
-
               <div className="space-y-3">
               <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider">Information produt</h3>
               <form className="from-pfd">

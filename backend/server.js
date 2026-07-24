@@ -12,34 +12,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-/* ======================
-   CONFIGURATION CORS CORRIGÉE
-====================== */
-const allowedOrigins = [
-  'https://luhamcode.com', 
-  'https://luhamlogistik.luhamcode.com', // AJOUTÉ : Votre vrai site de production
-  'https://onrender.com',  // AJOUTÉ : Votre adresse Render Frontend
-  'http://localhost:5173'
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    // Autorise les requêtes sans origine (comme Postman ou requêtes serveur à serveur)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      // Conseil : affichez l'origine bloquée dans les logs pour faciliter le débogage
-      console.log("Origine bloquée par CORS :", origin);
-      callback(new Error('Bloqué par la politique CORS de LUHAMCODE'));
-    }
-  },
-  credentials: true,
+// Configuration CORS : Autorise votre frontend Hostinger et votre environnement local Vite
+const corsOptions = {
+  origin: ['https://luhamcode.com', 'https://luhamlogistik.luhamcode.com', 'http://localhost:5173'],
   optionsSuccessStatus: 200
-}));
-// Gérer explicitement les requêtes de pré-vérification (Preflight) pour toutes les routes
-app.options('(.*)', cors());
+};
+app.use(cors(corsOptions));
 
 // 1. Préparation de la configuration MySQL dynamique
 const dbConfig = process.env.DATABASE_URL || {
@@ -95,9 +73,9 @@ app.post("/register", async (req, res) => {
         
         const companyId = companyResult.insertId;
 
-        // 3. Créer l'utilisateur lié à cette entreprise (CORRIGÉ : Retrait du user_id en trop dans le tableau)
+        // 3. Créer l'utilisateur lié à cette entreprise
         const sqlUser = "INSERT INTO users (email, password, company_id, company_name) VALUES (?, ?, ?, ?)";
-        db.query(sqlUser, [email, hash, companyId, name], (err3) => {
+        db.query(sqlUser, [email, hash, companyId, name, user_id], (err3) => {
           if (err3) {
               console.error(err3);
               return res.status(500).json({ error: "Erreur création utilisateur" });
