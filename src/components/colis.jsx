@@ -5,9 +5,8 @@ import { useReactToPrint } from "react-to-print";
 import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 
-
-const API_URL = import.meta.env.VITE_API_URL;
-
+// CORRIGÉ : Forçage de l'URL absolue pour éliminer définitivement l'erreur 404 / onrender.com
+const API_URL = "https://onrender.com";
 
 function Colis() {
   const navigate = useNavigate();
@@ -141,7 +140,6 @@ function Colis() {
       console.error('Erreur lors de la génération de l\'image', err);
     }
   };
-
   return (
     <div className="page p-10 bg-slate-100 min-h-screen flex flex-col lg:flex-row gap-10 notranslate">
       
