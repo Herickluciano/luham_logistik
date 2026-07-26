@@ -215,7 +215,9 @@ app.get("/colis", (req, res) => {
     res.json(result);
   });
 });
-
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "OK", message: "Le serveur Luham Logistik fonctionne parfaitement !" });
+});
 // ROUTE DE SECOURS GLOBAL (Évite le renvoi de HTML vide qui casse le CORS)
 app.use((req, res) => {
   res.status(404).json({ error: `La route ${req.originalUrl} n'existe pas.` });
