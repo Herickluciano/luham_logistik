@@ -12,8 +12,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Remplacez votre bloc app.use(cors(...)) actuel par celui-ci :
-
+// Configuration globale de CORS
 const corsOptions = {
   origin: [
     'https://luhamlogistik.luhamcode.com', 
@@ -27,9 +26,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Sécurité supplémentaire : Répondre instantanément 200 OK à TOUS les Preflights CORS
-app.options('*', cors(corsOptions));
-
+// CORRECTION EXPRESS 5 : Remplacement de '*' par '{*splat}' pour éviter le crash de path-to-regexp
+app.options('{*splat}', cors(corsOptions));
 
 // 1. Préparation de la configuration MySQL dynamique
 const dbConfig = process.env.DATABASE_URL || {
@@ -102,7 +100,7 @@ app.post("/register", async (req, res) => {
 });
 
 /* ======================
-   AUTH : LOGIN (Modifié de "/" à "/login")
+   AUTH : LOGIN
 ====================== */
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
@@ -137,7 +135,7 @@ app.post("/login", (req, res) => {
 /* ======================
    PRODUITS : CRUD
 ====================== */
-// AJOUTER PRODUIT (Sécurisé contre les plantages serveur)
+// AJOUTER PRODUIT
 app.post("/produits", (req, res) => {
   const { nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id } = req.body;
 
@@ -245,38 +243,13 @@ app.get("/colis", (req, res) => {
   db.query("SELECT * FROM colis ORDER BY id DESC", (err, result) => {
     if (err) {
       console.error("ERREUR GET COLIS :", err);
-      return res.status(500).json({ error: "Erreur récup colis" });
+      return res.status(500).json({ error: "Erreur serveur BDD Colis" });
     }
     res.json(result);
   });
 });
 
-// MODIFIER LE STATUT D'UN COLIS
-app.put("/colis/:id", (req, res) => {
-  const { id } = req.params;
-  const { statut } = req.body;
-  db.query("UPDATE colis SET statut = ? WHERE id = ?", [statut, id], (err) => {
-    if (err) {
-      console.error("ERREUR PUT COLIS :", err);
-      return res.status(500).json({ error: "Erreur modification statut" });
-    }
-    res.json({ message: "Statut mis à jour" });
-  });
-});
-
-// SUPPRIMER UN COLIS
-app.delete("/colis/:id", (req, res) => {
-  const { id } = req.params;
-  db.query("DELETE FROM colis WHERE id = ?", [id], (err) => {
-    if (err) {
-      console.error("ERREUR DELETE COLIS :", err);
-      return res.status(500).json({ error: "Erreur suppression colis" });
-    }
-    res.json({ message: "Colis supprimé" });
-  });
-});
-
-// Écoute du serveur sur le port dynamique de Render
+// DÉMARRAGE DU SERVEUR
 app.listen(PORT, () => {
-  console.log(`Serveur Express opérationnel sur le port ${PORT}`);
+  console.log(`Serveur démarré et à l'écoute sur le port ${PORT}`);
 });
