@@ -11,11 +11,23 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// 1. CONFIGURATION GLOBAL CORS COMPATIBLE EXPRESS 5
-app.use(cors());
+// 1. RECONFIGURATION EN CORRECTION BRUTE POUR EXPRESS 5 (PREFLIGHT ET CORS UNIVERSEL)
+// Cette fonction intercepte TOUT sans utiliser l'analyseur de routes de path-to-regexp
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 
-// CORRECTION CRUCIALE : Express 5 exige '{*splat}' au lieu de '*'
-app.options('{*splat}', cors()); 
+  // Répondre instantanément 204 (Succès sans corps) aux Preflights Axios
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+  next();
+});
+
+// Sécurité additionnelle standard
+app.use(cors());
 
 // 2. CONFIGURATION BASE DE DONNÉES
 const dbConfig = process.env.DATABASE_URL || {
@@ -104,7 +116,6 @@ app.post("/login", (req, res) => {
     }
     if (!result || result.length === 0) return res.status(401).json({ error: "Utilisateur introuvable" });
     
-    // CORRECTION : Récupération correcte du premier utilisateur du tableau
     const user = result[0]; 
     
     try {
@@ -161,7 +172,7 @@ app.get("/produits/:id", (req, res) => {
   db.query("SELECT * FROM produits WHERE id = ?", [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
     if (!result || result.length === 0) return res.status(404).json({ error: "Non trouvé" });
-    res.json(result[0]);
+    res.json(result);
   });
 });
 
@@ -209,8 +220,8 @@ app.get("/colis", (req, res) => {
 /* ======================
    HEALTH CHECK
 ====================== */
-app.get("/", (req, res) => {
-  res.status(200).json({ status: "OK", message: "Le serveur fonctionne !" });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
 });
 
 // ROUTE DE SECOURS GLOBAL
