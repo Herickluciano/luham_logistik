@@ -219,7 +219,7 @@ function Produits() {
                       <td className="py-1 px-4 text-right flex justify-end gap-2">
                         <button 
                           onClick={() => setEditingProduct(p)} 
-                          className="bg-yellow-500 text-white px-2 py-1 rounded text-xs"
+                          className="bg-yellow-500 text-black px-2 py-1 rounded text-xs"
                         >
                           Modifier
                         </button>

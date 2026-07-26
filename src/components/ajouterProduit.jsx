@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "https://luham-logistik-api.onrender.com"; 
+// Utilisation de la même URL que le composant Login
+const API_URL = import.meta.env.VITE_API_URL || "https://onrender.com"; 
 
 function AjouterProduit() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const companyName = localStorage.getItem("company_name") || "Mon Entreprise";
-  const storedCompanyId = localStorage.getItem("company_id") || "";
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -18,13 +18,17 @@ function AjouterProduit() {
     dimensions: "",
     gtin_groupage: "",
     palettisation: "",
-    company_id: storedCompanyId
+    company_id: "" // Initialisé vide, mis à jour par le useEffect
   });
 
   // ======================
-  // GESTION INACTIVITÉ (10 MIN)
+  // SYNCHRONISATION COMPANY_ID & INACTIVITÉ
   // ======================
   useEffect(() => {
+    // Récupération sécurisée au montage du composant
+    const storedCompanyId = localStorage.getItem("company_id") || "";
+    setFormData(prev => ({ ...prev, company_id: storedCompanyId }));
+
     if (!token) return;
 
     const tempsInactivite = 10 * 60 * 1000;
@@ -55,7 +59,6 @@ function AjouterProduit() {
   const calculerGTIN13 = (code12) => {
     if (!/^\d{12}$/.test(code12)) return code12;
     let somme = 0;
-    // Multiplicateurs alternés (3, 1, 3, 1...) en partant de la droite vers la gauche
     for (let i = 0; i < 12; i++) {
       const chiffre = parseInt(code12[i], 10);
       somme += (i % 2 === 0) ? chiffre * 1 : chiffre * 3;
@@ -69,14 +72,10 @@ function AjouterProduit() {
     const { name, value } = e.target;
 
     if (name === "gtin") {
-      const chiffres = value.replace(/\D/g, ""); // Garde uniquement les chiffres
-      
-      // Limite la saisie à 13 chiffres maximum
+      const chiffres = value.replace(/\D/g, ""); 
       if (chiffres.length > 13) return;
 
       let nouveauGTIN = chiffres;
-      
-      // Calcule automatiquement la clé de contrôle uniquement si on vient de taper le 12ème chiffre
       if (chiffres.length === 12) {
         nouveauGTIN = calculerGTIN13(chiffres);
       }
@@ -90,10 +89,12 @@ function AjouterProduit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!formData.company_id) {
-      alert("Erreur : ID d'entreprise (Company ID) manquant.");
+      alert("Erreur : ID d'entreprise (Company ID) manquant. Veuillez vous reconnecter.");
       return;
     }
+
     try {
       const dataToSend = {
         nom: formData.nom,
@@ -110,6 +111,7 @@ function AjouterProduit() {
       
       alert("Produit ajouté avec succès !");
       
+      // Réinitialisation en gardant le company_id intact
       setFormData({
         nom: "",
         gtin: "",
@@ -118,7 +120,7 @@ function AjouterProduit() {
         dimensions: "",
         gtin_groupage: "",
         palettisation: "",
-        company_id: storedCompanyId
+        company_id: formData.company_id
       });
     } catch (err) {
       console.error("Détail de l'erreur :", err);
@@ -224,11 +226,11 @@ function AjouterProduit() {
 
       <div className="bas-ajout">
         <span className="slogan">“<strong className="luham">LuhamCode</strong> – L’innovation digitale qui rapproche le monde.”</span>
-        <a className="btn-success resp-1" href="https://nesteline.alwaysdata.net/contact/" role="button">Contactez-nous</a>
+        <a className="btn-success resp-1" href="https://alwaysdata.net" role="button">Contactez-nous</a>
         <div>
           <p className="droit">
             &copy; 2026 . Tous droits réservés à <a href="http://luhamcode.com">www.luhamcode.com</a> 
-            <span className="className">Design by <a href="https://www.facebook.com/share/1Cgrh1dvau/?mibextid=wwXIfr" target="_blank" rel="noreferrer">Luciano Hamilton Bleguy</a></span>
+            <span className="className">Design by <a href="https://facebook.com" target="_blank" rel="noreferrer">Luciano Hamilton Bleguy</a></span>
           </p>
         </div>
       </div>
