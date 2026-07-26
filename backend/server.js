@@ -10,9 +10,9 @@ const app = express();
 const SECRET = process.env.JWT_SECRET || "LUHAMCODE_SECRET_KEY_99";
 const PORT = process.env.PORT || 3000; 
 
-app.use(express.json()); 
+app.use(express.json());
 
-// Autorise temporairement n'importe quel site à communiquer avec votre API (Idéal pour le débug)
+// Configuration globale de CORS (Ultra permissive pour le débug)
 app.use(cors());
 
 // Gère le Preflight CORS globalement de manière compatible Express 4 et Express 5
@@ -247,7 +247,14 @@ app.get("/colis", (req, res) => {
   });
 });
 
+/* ======================
+   ROUTE DE SECOURS (404 GLOBAL)
+====================== */
+app.use((req, res) => {
+  res.status(404).json({ error: `La route ${req.originalUrl} n'existe pas sur ce serveur.` });
+});
+
 // DÉMARRAGE DU SERVEUR
 app.listen(PORT, () => {
-  console.log(`Serveur démarré et à l'écoute sur le port ${PORT}`);
+  console.log(`Serveur démarré avec succès sur le port ${PORT}`);
 });
