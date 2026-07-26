@@ -6,28 +6,26 @@ const jwt = require("jsonwebtoken");
 
 const app = express();
 
-// Variables de configuration dynamiques pour la production
 const SECRET = process.env.JWT_SECRET || "LUHAMCODE_SECRET_KEY_99";
 const PORT = process.env.PORT || 3000; 
 
 app.use(express.json());
 
-// Configuration globale de CORS (Ultra permissive pour le débug)
+// 1. CONFIGURATION CORS ABSOLUE (Placée tout en haut)
 app.use(cors());
 
-// Gère le Preflight CORS globalement de manière compatible Express 4 et Express 5
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // Répond immédiatement 200 OK aux requêtes Preflight
+    return res.sendStatus(200); 
   }
   next();
 });
 
-// 1. Préparation de la configuration MySQL dynamique
+// 2. CONFIGURATION BASE DE DONNÉES
 const dbConfig = process.env.DATABASE_URL || {
   host: "localhost",
   user: "root",
@@ -35,7 +33,6 @@ const dbConfig = process.env.DATABASE_URL || {
   database: "db-logistique"
 };
 
-// 2. Création du Pool de connexions (Anti-coupure réseau / ECONNRESET)
 const pool = mysql.createPool({
   ...(typeof dbConfig === 'string' ? { uri: dbConfig } : dbConfig),
   waitForConnections: true,
@@ -45,7 +42,6 @@ const pool = mysql.createPool({
   keepAliveInitialDelay: 10000
 });
 
-// 3. Wrapper pour maintenir la compatibilité stricte avec votre code db.query actuel
 const db = {
   query: (sql, params, callback) => {
     if (typeof params === 'function') {
@@ -56,7 +52,7 @@ const db = {
   }
 };
 
-console.log("Pool de connexions MySQL configuré avec succès !");
+console.log("Pool de connexions MySQL prêt.");
 
 /* ======================
    AUTH : REGISTER
@@ -66,7 +62,7 @@ app.post("/register", async (req, res) => {
 
   db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
     if (err) {
-      console.error("Erreur BDD Recherche Register:", err);
+      console.error("Erreur Register:", err);
       return res.status(500).json({ error: "Erreur interne de la base de données." });
     }
     if (result.length > 0) return res.status(400).json({ error: "Email déjà utilisé" });
@@ -77,28 +73,28 @@ app.post("/register", async (req, res) => {
       db.query("INSERT INTO companies (name, gln, user_id) VALUES (?, ?, ?)", [name, gln, user_id], (err2, companyResult) => {
         if (err2) {
             console.error("Erreur création entreprise:", err2); 
-            return res.status(500).json({ error: "Erreur lors de la création de l'entreprise." });
+            return res.status(500).json({ error: "Erreur entreprise." });
         }
         
         const companyId = companyResult.insertId;
-
         const sqlUser = "INSERT INTO users (email, password, company_id, company_name) VALUES (?, ?, ?, ?)";
+        
         db.query(sqlUser, [email, hash, companyId, name], (err3) => {
           if (err3) {
               console.error("Erreur création utilisateur:", err3);
-              return res.status(500).json({ error: "Erreur lors de la création de l'utilisateur." });
+              return res.status(500).json({ error: "Erreur utilisateur." });
           }
-          res.json({ message: "Compte créé avec succès", company_id: companyId });
+          res.json({ message: "Compte créé", company_id: companyId });
         });
       });
     } catch (e) { 
-      res.status(500).json({ error: "Erreur lors du hachage du mot de passe." }); 
+      res.status(500).json({ error: "Erreur hachage." }); 
     }
   });
 });
 
 /* ======================
-   AUTH : LOGIN
+   AUTH : LOGIN (CORRIGÉ : Sécurité sur le tableau result)
 ====================== */
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
@@ -112,107 +108,88 @@ app.post("/login", (req, res) => {
   db.query(sql, [email], async (err, result) => {
     if (err) {
       console.error("Erreur BDD Login:", err);
-      return res.status(500).json({ error: "Erreur serveur lors de la connexion." });
+      return res.status(500).json({ error: "Erreur serveur." });
     }
-    if (result.length === 0) return res.status(401).json({ error: "Utilisateur introuvable" });
+    if (!result || result.length === 0) return res.status(401).json({ error: "Utilisateur introuvable" });
     
-    const user = result[0];
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: "Mot de passe incorrect" });
+    // CORRECTION ICI : result est un tableau, il faut extraire le premier index [0]
+    const user = result[0]; 
+    
+    try {
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) return res.status(401).json({ error: "Mot de passe incorrect" });
 
-    const token = jwt.sign({ id: user.id, company_id: user.company_id }, SECRET, { expiresIn: "24h" });
+      const token = jwt.sign({ id: user.id, company_id: user.company_id }, SECRET, { expiresIn: "24h" });
 
-    res.json({ 
-      token, 
-      company_id: user.company_id, 
-      company_name: user.real_company_name 
-    });
+      res.json({ 
+        token, 
+        company_id: user.company_id, 
+        company_name: user.real_company_name 
+      });
+    } catch (e) {
+      res.status(500).json({ error: "Erreur décryptage connexion." });
+    }
   });
 });
 
 /* ======================
-   PRODUITS : CRUD
+   PRODUITS : CRUD (SÉCURISÉ CONTRE LES CRASHS)
 ====================== */
-// AJOUTER PRODUIT
 app.post("/produits", (req, res) => {
   const { nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id } = req.body;
 
   if (!nom || !gtin || !company_id) {
-    return res.status(400).json({ error: "Les champs Désignation, Code de Ref (GTIN) et Company ID sont obligatoires." });
+    return res.status(400).json({ error: "Champs obligatoires manquants." });
   }
 
+  // Sécurisation stricte de la requête pour empêcher Node de planter si MySQL renvoie une erreur
   db.query(
     "INSERT INTO produits (nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [nom, gtin, description, poids_net, dimensions, gtin_groupage || "", palettisation || "", company_id],
+    [nom, gtin, description || "", poids_net || "", dimensions || "", gtin_groupage || "", palettisation || "", company_id],
     (err, result) => {
       if (err) {
-        console.error("ERREUR INTERCEPTÉE - INSERT PRODUIT :", err);
-        return res.status(500).json({ error: "Erreur SQL : " + err.message });
+        console.error("CRASH INTERCEPTÉ - SQL PRODUIT :", err);
+        // On renvoie un code JSON propre au lieu de faire planter le serveur
+        return res.status(500).json({ error: "Erreur SQL Base de données : " + err.message });
       }
       res.json({ message: "Produit ajouté", id: result.insertId });
     }
   );
 });
 
-// RÉCUPÉRER TOUS LES PRODUITS D'UNE ENTREPRISE
 app.get("/produits", (req, res) => {
   const { company_id } = req.query;
+  if (!company_id) return res.status(400).json({ error: "company_id manquant." });
 
-  if (!company_id) {
-    return res.status(400).json({ error: "Le paramètre company_id est manquant." });
-  }
-
-  db.query(
-    "SELECT * FROM produits WHERE company_id = ? ORDER BY id DESC",
-    [company_id],
-    (err, result) => {
-      if (err) {
-        console.error("ERREUR GET PRODUITS :", err);
-        return res.status(500).json({ error: "Erreur base de données : " + err.message });
-      }
-      res.json(result);
-    }
-  );
+  db.query("SELECT * FROM produits WHERE company_id = ? ORDER BY id DESC", [company_id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result);
+  });
 });
 
-// RÉCUPÉRER UN PRODUIT UNIQUE
 app.get("/produits/:id", (req, res) => {
   db.query("SELECT * FROM produits WHERE id = ?", [req.params.id], (err, result) => {
-    if (err) {
-      console.error("ERREUR GET UNIQUE PRODUIT :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
-    if (result.length === 0) return res.status(404).json({ error: "Produit non trouvé" });
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    if (!result || result.length === 0) return res.status(404).json({ error: "Non trouvé" });
     res.json(result[0]);
   });
 });
 
-// MODIFIER UN PRODUIT
 app.put("/produits/:id", (req, res) => {
-  const { id } = req.params;
   const { nom, gtin, description, dimensions, poids_net } = req.body;
-
   db.query(
     "UPDATE produits SET nom=?, gtin=?, description=?, dimensions=?, poids_net=? WHERE id=?",
-    [nom, gtin, description, dimensions, poids_net, id],
-    (err, result) => {
-      if (err) {
-        console.error("ERREUR UPDATE PRODUIT :", err);
-        return res.status(500).json({ error: "Erreur SQL Update" });
-      }
+    [nom, gtin, description, dimensions, poids_net, req.params.id],
+    (err) => {
+      if (err) return res.status(500).json({ error: "Erreur SQL Update" });
       res.json({ message: "Produit mis à jour" });
     }
   );
 });
 
-// SUPPRIMER UN PRODUIT
 app.delete("/produits/:id", (req, res) => {
-  const { id } = req.params;
-  db.query("DELETE FROM produits WHERE id = ?", [id], (err, result) => {
-    if (err) {
-      console.error("ERREUR DELETE PRODUIT :", err);
-      return res.status(500).json({ error: "Erreur SQL Delete" });
-    }
+  db.query("DELETE FROM produits WHERE id = ?", [req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: "Erreur SQL Delete" });
     res.json({ message: "Produit supprimé" });
   });
 });
@@ -220,41 +197,30 @@ app.delete("/produits/:id", (req, res) => {
 /* ======================
    COLIS : CRUD
 ====================== */
-// CRÉER UN COLIS
 app.post("/colis", (req, res) => {
   const { produit_id, destinataire_nom, destinataire_adresse, destinataire_gln, destinataire_gtin } = req.body;
   db.query(
     "INSERT INTO colis (produit_id, statut, destinataire_nom, destinataire_adresse, destinataire_gln, destinataire_gtin) VALUES (?, 'En attente', ?, ?, ?, ?)",
     [produit_id, destinataire_nom, destinataire_adresse, destinataire_gln, destinataire_gtin],
     (err, result) => {
-      if (err) {
-        console.error("ERREUR POST COLIS :", err);
-        return res.status(500).json({ error: err.message });
-      }
+      if (err) return res.status(500).json({ error: err.message });
       res.json({ id: result.insertId, message: "Colis créé" });
     }
   );
 });
 
-// RÉCUPÉRER TOUS LES COLIS
 app.get("/colis", (req, res) => {
   db.query("SELECT * FROM colis ORDER BY id DESC", (err, result) => {
-    if (err) {
-      console.error("ERREUR GET COLIS :", err);
-      return res.status(500).json({ error: "Erreur serveur BDD Colis" });
-    }
+    if (err) return res.status(500).json({ error: "Erreur" });
     res.json(result);
   });
 });
 
-/* ======================
-   ROUTE DE SECOURS (404 GLOBAL)
-====================== */
+// ROUTE DE SECOURS GLOBAL (Évite le renvoi de HTML vide qui casse le CORS)
 app.use((req, res) => {
-  res.status(404).json({ error: `La route ${req.originalUrl} n'existe pas sur ce serveur.` });
+  res.status(404).json({ error: `La route ${req.originalUrl} n'existe pas.` });
 });
 
-// DÉMARRAGE DU SERVEUR
 app.listen(PORT, () => {
-  console.log(`Serveur démarré avec succès sur le port ${PORT}`);
+  console.log(`Serveur opérationnel sur le port ${PORT}`);
 });
