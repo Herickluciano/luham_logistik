@@ -10,24 +10,22 @@ const app = express();
 const SECRET = process.env.JWT_SECRET || "LUHAMCODE_SECRET_KEY_99";
 const PORT = process.env.PORT || 3000; 
 
-app.use(express.json());
+app.use(express.json()); 
 
-// Configuration globale de CORS
-const corsOptions = {
-  origin: [
-    'https://luhamlogistik.luhamcode.com', 
-    'https://luhamcode.com', 
-    'http://localhost:5173'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Force l'acceptation de OPTIONS
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200 // Assure un retour HTTP 200 aux navigateurs anciens
-};   
+// Autorise temporairement n'importe quel site à communiquer avec votre API (Idéal pour le débug)
+app.use(cors());
 
-app.use(cors(corsOptions));
-
-// CORRECTION EXPRESS 5 : Remplacement de '*' par '{*splat}' pour éviter le crash de path-to-regexp
-app.options('{*splat}', cors(corsOptions));
+// Gère le Preflight CORS globalement de manière compatible Express 4 et Express 5
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // Répond immédiatement 200 OK aux requêtes Preflight
+  }
+  next();
+});
 
 // 1. Préparation de la configuration MySQL dynamique
 const dbConfig = process.env.DATABASE_URL || {
