@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-const API_URL = "https://onrender.com";
+// ⚠️ METTEZ ICI L'URL EXACTE DE VOTRE BACKEND RENDER
+const API_URL = "https://luham-logistik-api.onrender.com"; 
 
 function AjouterProduit() {
   const navigate = useNavigate();
@@ -16,14 +17,13 @@ function AjouterProduit() {
     description: "",
     poids_net: "",
     dimensions: "",
-    created_at: "",
     gtin_groupage: "",
     palettisation: "",
     company_id: storedCompanyId
   });
 
   // ======================
-  // GESTION INACTIVITÉ (20 MIN)
+  // GESTION INACTIVITÉ (10 MIN)
   // ======================
   useEffect(() => {
     if (!token) return;
@@ -82,18 +82,40 @@ function AjouterProduit() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.company_id) {
-      alert("Company ID manquant");
+      alert("Erreur : ID d'entreprise (Company ID) manquant.");
       return;
     }
     try {
-      await axios.post(`${API_URL}/produits`, {
-        ...formData,
+      // Nettoyage de l'objet envoyé pour correspondre exactement à votre backend Express
+      const dataToSend = {
+        nom: formData.nom,
+        gtin: formData.gtin,
+        description: formData.description,
+        poids_net: formData.poids_net,
+        dimensions: formData.dimensions,
+        gtin_groupage: formData.gtin_groupage || "",
+        palettisation: formData.palettisation || "",
         company_id: Number(formData.company_id)
-      });
+      };
+
+      await axios.post(`${API_URL}/produits`, dataToSend);
+      
       alert("Produit ajouté avec succès !");
-      setFormData({ ...formData, nom: "", gtin: "", description: "", poids_net: "", dimensions: "", gtin_groupage: "", created_at: "", palettisation: "" });
+      
+      // Réinitialisation du formulaire en conservant le company_id
+      setFormData({
+        nom: "",
+        gtin: "",
+        description: "",
+        poids_net: "",
+        dimensions: "",
+        gtin_groupage: "",
+        palettisation: "",
+        company_id: storedCompanyId
+      });
     } catch (err) {
-      alert("Erreur lors de l'ajout du produit");
+      console.error("Détail de l'erreur :", err);
+      alert("Erreur lors de l'ajout du produit. Vérifiez la console.");
     }
   };
 
@@ -125,18 +147,12 @@ function AjouterProduit() {
           />
 
           <input
-            name="created_at"
-            placeholder="date de creation"
-            onChange={handleChange}
-            required
-          />
-
-          <input
             name="company_id"
             placeholder="Company ID"
             onChange={handleChange}
             value={formData.company_id}
             required
+            disabled // Évite la modification manuelle accidentelle
           />
 
           <input
@@ -152,6 +168,13 @@ function AjouterProduit() {
             placeholder="Numéro de Groupage"
             onChange={handleChange}
             value={formData.gtin_groupage}
+          />
+
+          <input
+            name="palettisation"
+            placeholder="Palettisation"
+            onChange={handleChange}
+            value={formData.palettisation}
           />
 
           <input
@@ -185,9 +208,9 @@ function AjouterProduit() {
           <button 
             type="button"
             onClick={() => navigate("/home")}
-            className="submit-reg "
+            className="submit-reg"
           >
-            Retour l'accueil
+            Retour à l'accueil
           </button>
         </div>
       </form>

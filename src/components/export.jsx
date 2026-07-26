@@ -2,14 +2,42 @@ import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import axios from "axios";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom"; // Ajout de Navigate ici
 
-function Export({ data }) {
+// Liaison directe avec votre fichier .env
+const API_URL = import.meta.env.VITE_API_URL; 
+
+function Export({ data = null }) { // Ajout de = null pour éviter le crash en production
    const token = localStorage.getItem("token");
    const navigate = useNavigate();
-  const companyName = localStorage.getItem("company_name") || "Mon Entreprise";
-  const companyId = localStorage.getItem("company_id");
-  const API_URL = "https://onrender.com";
+   const companyName = localStorage.getItem("company_name") || "Mon Entreprise";
+   const companyId = localStorage.getItem("company_id");
+
+  // --- FONCTIONS DE GESTION DE LA SÉLECTION DES PRODUITS ---
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleProduitSelection = (index, e) => {
+    const produitNomSelectionne = e.target.value;
+    const nouveauTableauProduits = [...formData.produits];
+    const produitInfo = catalogueProduits.find(p => p.nom === produitNomSelectionne);
+
+    nouveauTableauProduits[index] = {
+      ...nouveauTableauProduits[index],
+      nom: produitNomSelectionne,
+      taille: produitInfo?.dimensions || "Standard", 
+    };
+    setFormData({ ...formData, produits: nouveauTableauProduits });
+  };
+
+  const handleProduitChampChange = (index, field, value) => {
+    const nouveauTableauProduits = [...formData.produits];
+    nouveauTableauProduits[index][field] = value;
+    setFormData({ ...formData, produits: nouveauTableauProduits });
+  };
+  // --------------------------------------------------------
 
    useEffect(() => {
     // Si pas de token, on ne lance pas le minuteur
@@ -525,26 +553,26 @@ function Export({ data }) {
               </form>
               </div>
               <form className="from-pfd">
-              <div className="col-span-3">
-                <input
-                  type="number"
-                  placeholder="Largeur du colis"
-                  className="large w-full p-3 border rounded-xl"
-                  value={produit.largeur}
-                  onChange={(e) => handleProduitChange(index, "largeur", e.target.value)}
-                />
-              </div>
-              <div className="col-span-3">
-                <input
-                  type="number"
-                  placeholder="Volume du colis"
-                  className="volume w-full p-3 border rounded-xl"
-                  value={produit.volume}
-                  onChange={(e) => handleProduitChange(index, "volume", e.target.value)}
-                />
-              </div>
-            
-              </form>
+  <div className="col-span-3">
+    <input
+      type="number"
+      placeholder="Largeur du colis"
+      className="large w-full p-3 border rounded-xl"
+      value={produit.largeur || ""}
+      onChange={(e) => handleProduitChampChange(index, "largeur", e.target.value)} // 👈 Modifié ici
+    />
+  </div>
+  <div className="col-span-3">
+    <input
+      type="number"
+      placeholder="Volume du colis"
+      className="volume w-full p-3 border rounded-xl"
+      value={produit.volume || ""}
+      onChange={(e) => handleProduitChampChange(index, "volume", e.target.value)} // 👈 Modifié ici
+    />
+  </div>
+</form>
+
               <form className="from-pfd">
                   <div className="col-span-3">
                <input
