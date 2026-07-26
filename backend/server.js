@@ -11,11 +11,11 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// 1. CONFIGURATION NATIVE ET GLOBALE CORS (Compatible Express 5)
+// 1. CONFIGURATION GLOBAL CORS COMPATIBLE EXPRESS 5
 app.use(cors());
 
-// Réponse immédiate HTTP 200 OK aux requêtes Preflight OPTIONS émises par Axios
-app.options('*', cors()); 
+// CORRECTION CRUCIALE : Express 5 exige '{*splat}' au lieu de '*'
+app.options('{*splat}', cors()); 
 
 // 2. CONFIGURATION BASE DE DONNÉES
 const dbConfig = process.env.DATABASE_URL || {
@@ -104,7 +104,7 @@ app.post("/login", (req, res) => {
     }
     if (!result || result.length === 0) return res.status(401).json({ error: "Utilisateur introuvable" });
     
-    // Extraction stricte du premier enregistrement utilisateur
+    // CORRECTION : Récupération correcte du premier utilisateur du tableau
     const user = result[0]; 
     
     try {
@@ -207,10 +207,10 @@ app.get("/colis", (req, res) => {
 });
 
 /* ======================
-   HEALTH CHECK (Indispensable pour Render)
+   HEALTH CHECK
 ====================== */
 app.get("/", (req, res) => {
-  res.status(200).json({ status: "OK", message: "Le serveur Luham Logistik fonctionne parfaitement !" });
+  res.status(200).json({ status: "OK", message: "Le serveur fonctionne !" });
 });
 
 // ROUTE DE SECOURS GLOBAL
