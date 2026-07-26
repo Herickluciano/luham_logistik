@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// ⚠️ METTEZ ICI L'URL EXACTE DE VOTRE BACKEND RENDER
 const API_URL = "https://luham-logistik-api.onrender.com"; 
 
 function AjouterProduit() {
@@ -52,13 +51,14 @@ function AjouterProduit() {
     };
   }, [navigate, token]);
 
-  // CALCUL CLÉ GTIN-13
+  // ALGORITHME OFFICIEL GS1 POUR LA CLÉ GTIN-13
   const calculerGTIN13 = (code12) => {
     if (!/^\d{12}$/.test(code12)) return code12;
     let somme = 0;
+    // Multiplicateurs alternés (3, 1, 3, 1...) en partant de la droite vers la gauche
     for (let i = 0; i < 12; i++) {
-      const chiffre = parseInt(code12[i]);
-      somme += i % 2 === 0 ? chiffre : chiffre * 3;
+      const chiffre = parseInt(code12[i], 10);
+      somme += (i % 2 === 0) ? chiffre * 1 : chiffre * 3;
     }
     const reste = somme % 10;
     const cle = reste === 0 ? 0 : 10 - reste;
@@ -67,15 +67,24 @@ function AjouterProduit() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (name === "gtin") {
-      const chiffres = value.replace(/\D/g, "");
+      const chiffres = value.replace(/\D/g, ""); // Garde uniquement les chiffres
+      
+      // Limite la saisie à 13 chiffres maximum
+      if (chiffres.length > 13) return;
+
       let nouveauGTIN = chiffres;
+      
+      // Calcule automatiquement la clé de contrôle uniquement si on vient de taper le 12ème chiffre
       if (chiffres.length === 12) {
         nouveauGTIN = calculerGTIN13(chiffres);
       }
+
       setFormData({ ...formData, gtin: nouveauGTIN });
       return;
     }
+
     setFormData({ ...formData, [name]: value });
   };
 
@@ -86,7 +95,6 @@ function AjouterProduit() {
       return;
     }
     try {
-      // Nettoyage de l'objet envoyé pour correspondre exactement à votre backend Express
       const dataToSend = {
         nom: formData.nom,
         gtin: formData.gtin,
@@ -102,7 +110,6 @@ function AjouterProduit() {
       
       alert("Produit ajouté avec succès !");
       
-      // Réinitialisation du formulaire en conservant le company_id
       setFormData({
         nom: "",
         gtin: "",
@@ -115,7 +122,8 @@ function AjouterProduit() {
       });
     } catch (err) {
       console.error("Détail de l'erreur :", err);
-      alert("Erreur lors de l'ajout du produit. Vérifiez la console.");
+      const msgErreur = err.response?.data?.error || "Erreur lors de l'ajout du produit.";
+      alert(msgErreur);
     }
   };
 
@@ -149,10 +157,9 @@ function AjouterProduit() {
           <input
             name="company_id"
             placeholder="Company ID"
-            onChange={handleChange}
             value={formData.company_id}
             required
-            disabled // Évite la modification manuelle accidentelle
+            disabled 
           />
 
           <input

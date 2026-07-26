@@ -12,18 +12,30 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Configuration CORS : Autorise votre frontend Hostinger et votre environnement local Vite
+// Remplacez votre bloc app.use(cors(...)) actuel par celui-ci :
+
 const corsOptions = {
-  origin: ['https://luhamcode.com', 'https://luhamlogistik.luhamcode.com', 'http://localhost:5173'],
-  optionsSuccessStatus: 200
-};
+  origin: [
+    'https://luhamlogistik.luhamcode.com', 
+    'https://luhamcode.com', 
+    'http://localhost:5173'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Force l'acceptation de OPTIONS
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200 // Assure un retour HTTP 200 aux navigateurs anciens
+};   
+
 app.use(cors(corsOptions));
+
+// Sécurité supplémentaire : Répondre instantanément 200 OK à TOUS les Preflights CORS
+app.options('*', cors(corsOptions));
+
 
 // 1. Préparation de la configuration MySQL dynamique
 const dbConfig = process.env.DATABASE_URL || {
   host: "localhost",
   user: "root",
-  password: "",
+  password: "",  
   database: "db-logistique"
 };
 
@@ -56,43 +68,43 @@ console.log("Pool de connexions MySQL configuré avec succès !");
 app.post("/register", async (req, res) => {
   const { name, gln, email, password, user_id } = req.body;
 
-  // 1. Vérifier si l'utilisateur existe déjà
   db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur BDD Recherche" });
+    if (err) {
+      console.error("Erreur BDD Recherche Register:", err);
+      return res.status(500).json({ error: "Erreur interne de la base de données." });
+    }
     if (result.length > 0) return res.status(400).json({ error: "Email déjà utilisé" });
 
     try {
       const hash = await bcrypt.hash(password, 10);
       
-      // 2. Créer l'entreprise (On insère seulement name et gln)
       db.query("INSERT INTO companies (name, gln, user_id) VALUES (?, ?, ?)", [name, gln, user_id], (err2, companyResult) => {
         if (err2) {
-            console.error(err2); 
-            return res.status(500).json({ error: "Erreur création entreprise dans MySQL" });
+            console.error("Erreur création entreprise:", err2); 
+            return res.status(500).json({ error: "Erreur lors de la création de l'entreprise." });
         }
         
         const companyId = companyResult.insertId;
 
-        // 3. Créer l'utilisateur lié à cette entreprise
         const sqlUser = "INSERT INTO users (email, password, company_id, company_name) VALUES (?, ?, ?, ?)";
-        db.query(sqlUser, [email, hash, companyId, name, user_id], (err3) => {
+        db.query(sqlUser, [email, hash, companyId, name], (err3) => {
           if (err3) {
-              console.error(err3);
-              return res.status(500).json({ error: "Erreur création utilisateur" });
+              console.error("Erreur création utilisateur:", err3);
+              return res.status(500).json({ error: "Erreur lors de la création de l'utilisateur." });
           }
           res.json({ message: "Compte créé avec succès", company_id: companyId });
         });
       });
     } catch (e) { 
-      res.status(500).json({ error: "Erreur lors du hachage du mot de passe" }); 
+      res.status(500).json({ error: "Erreur lors du hachage du mot de passe." }); 
     }
   });
 });
 
 /* ======================
-   AUTH : LOGIN
+   AUTH : LOGIN (Modifié de "/" à "/login")
 ====================== */
-app.post("/", (req, res) => {
+app.post("/login", (req, res) => {
   const { email, password } = req.body;
   
   const sql = `
@@ -102,7 +114,11 @@ app.post("/", (req, res) => {
     WHERE users.email = ?`;
 
   db.query(sql, [email], async (err, result) => {
-    if (err || result.length === 0) return res.status(401).json({ error: "Utilisateur introuvable" });
+    if (err) {
+      console.error("Erreur BDD Login:", err);
+      return res.status(500).json({ error: "Erreur serveur lors de la connexion." });
+    }
+    if (result.length === 0) return res.status(401).json({ error: "Utilisateur introuvable" });
     
     const user = result[0];
     const match = await bcrypt.compare(password, user.password);
@@ -121,14 +137,22 @@ app.post("/", (req, res) => {
 /* ======================
    PRODUITS : CRUD
 ====================== */
-// AJOUTER PRODUIT
+// AJOUTER PRODUIT (Sécurisé contre les plantages serveur)
 app.post("/produits", (req, res) => {
   const { nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id } = req.body;
+
+  if (!nom || !gtin || !company_id) {
+    return res.status(400).json({ error: "Les champs Désignation, Code de Ref (GTIN) et Company ID sont obligatoires." });
+  }
+
   db.query(
     "INSERT INTO produits (nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id],
+    [nom, gtin, description, poids_net, dimensions, gtin_groupage || "", palettisation || "", company_id],
     (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        console.error("ERREUR INTERCEPTÉE - INSERT PRODUIT :", err);
+        return res.status(500).json({ error: "Erreur SQL : " + err.message });
+      }
       res.json({ message: "Produit ajouté", id: result.insertId });
     }
   );
@@ -138,15 +162,17 @@ app.post("/produits", (req, res) => {
 app.get("/produits", (req, res) => {
   const { company_id } = req.query;
 
-  console.log("company_id =", company_id);
+  if (!company_id) {
+    return res.status(400).json({ error: "Le paramètre company_id est manquant." });
+  }
 
   db.query(
     "SELECT * FROM produits WHERE company_id = ? ORDER BY id DESC",
     [company_id],
     (err, result) => {
       if (err) {
-        console.log("ERREUR MYSQL :", err);
-        return res.status(500).json({ error: err.message });
+        console.error("ERREUR GET PRODUITS :", err);
+        return res.status(500).json({ error: "Erreur base de données : " + err.message });
       }
       res.json(result);
     }
@@ -156,7 +182,10 @@ app.get("/produits", (req, res) => {
 // RÉCUPÉRER UN PRODUIT UNIQUE
 app.get("/produits/:id", (req, res) => {
   db.query("SELECT * FROM produits WHERE id = ?", [req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    if (err) {
+      console.error("ERREUR GET UNIQUE PRODUIT :", err);
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
     if (result.length === 0) return res.status(404).json({ error: "Produit non trouvé" });
     res.json(result[0]);
   });
@@ -171,7 +200,10 @@ app.put("/produits/:id", (req, res) => {
     "UPDATE produits SET nom=?, gtin=?, description=?, dimensions=?, poids_net=? WHERE id=?",
     [nom, gtin, description, dimensions, poids_net, id],
     (err, result) => {
-      if (err) return res.status(500).json({ error: "Erreur SQL Update" });
+      if (err) {
+        console.error("ERREUR UPDATE PRODUIT :", err);
+        return res.status(500).json({ error: "Erreur SQL Update" });
+      }
       res.json({ message: "Produit mis à jour" });
     }
   );
@@ -181,7 +213,10 @@ app.put("/produits/:id", (req, res) => {
 app.delete("/produits/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM produits WHERE id = ?", [id], (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur SQL Delete" });
+    if (err) {
+      console.error("ERREUR DELETE PRODUIT :", err);
+      return res.status(500).json({ error: "Erreur SQL Delete" });
+    }
     res.json({ message: "Produit supprimé" });
   });
 });
@@ -196,7 +231,10 @@ app.post("/colis", (req, res) => {
     "INSERT INTO colis (produit_id, statut, destinataire_nom, destinataire_adresse, destinataire_gln, destinataire_gtin) VALUES (?, 'En attente', ?, ?, ?, ?)",
     [produit_id, destinataire_nom, destinataire_adresse, destinataire_gln, destinataire_gtin],
     (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        console.error("ERREUR POST COLIS :", err);
+        return res.status(500).json({ error: err.message });
+      }
       res.json({ id: result.insertId, message: "Colis créé" });
     }
   );
@@ -205,7 +243,10 @@ app.post("/colis", (req, res) => {
 // RÉCUPÉRER TOUS LES COLIS
 app.get("/colis", (req, res) => {
   db.query("SELECT * FROM colis ORDER BY id DESC", (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur récup colis" });
+    if (err) {
+      console.error("ERREUR GET COLIS :", err);
+      return res.status(500).json({ error: "Erreur récup colis" });
+    }
     res.json(result);
   });
 });
@@ -215,7 +256,10 @@ app.put("/colis/:id", (req, res) => {
   const { id } = req.params;
   const { statut } = req.body;
   db.query("UPDATE colis SET statut = ? WHERE id = ?", [statut, id], (err) => {
-    if (err) return res.status(500).json({ error: "Erreur modification statut" });
+    if (err) {
+      console.error("ERREUR PUT COLIS :", err);
+      return res.status(500).json({ error: "Erreur modification statut" });
+    }
     res.json({ message: "Statut mis à jour" });
   });
 });
@@ -224,7 +268,10 @@ app.put("/colis/:id", (req, res) => {
 app.delete("/colis/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM colis WHERE id = ?", [id], (err) => {
-    if (err) return res.status(500).json({ error: "Erreur suppression colis" });
+    if (err) {
+      console.error("ERREUR DELETE COLIS :", err);
+      return res.status(500).json({ error: "Erreur suppression colis" });
+    }
     res.json({ message: "Colis supprimé" });
   });
 });
