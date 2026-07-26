@@ -11,19 +11,11 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// 1. CONFIGURATION CORS ABSOLUE (Placée tout en haut)
+// 1. CONFIGURATION NATIVE ET GLOBALE CORS (Compatible Express 5)
 app.use(cors());
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200); 
-  }
-  next();
-});
+// Réponse immédiate HTTP 200 OK aux requêtes Preflight OPTIONS émises par Axios
+app.options('*', cors()); 
 
 // 2. CONFIGURATION BASE DE DONNÉES
 const dbConfig = process.env.DATABASE_URL || {
@@ -94,7 +86,7 @@ app.post("/register", async (req, res) => {
 });
 
 /* ======================
-   AUTH : LOGIN (CORRIGÉ : Sécurité sur le tableau result)
+   AUTH : LOGIN
 ====================== */
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
@@ -112,7 +104,7 @@ app.post("/login", (req, res) => {
     }
     if (!result || result.length === 0) return res.status(401).json({ error: "Utilisateur introuvable" });
     
-    // CORRECTION ICI : result est un tableau, il faut extraire le premier index [0]
+    // Extraction stricte du premier enregistrement utilisateur
     const user = result[0]; 
     
     try {
@@ -133,7 +125,7 @@ app.post("/login", (req, res) => {
 });
 
 /* ======================
-   PRODUITS : CRUD (SÉCURISÉ CONTRE LES CRASHS)
+   PRODUITS : CRUD
 ====================== */
 app.post("/produits", (req, res) => {
   const { nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id } = req.body;
@@ -142,14 +134,12 @@ app.post("/produits", (req, res) => {
     return res.status(400).json({ error: "Champs obligatoires manquants." });
   }
 
-  // Sécurisation stricte de la requête pour empêcher Node de planter si MySQL renvoie une erreur
   db.query(
     "INSERT INTO produits (nom, gtin, description, poids_net, dimensions, gtin_groupage, palettisation, company_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     [nom, gtin, description || "", poids_net || "", dimensions || "", gtin_groupage || "", palettisation || "", company_id],
     (err, result) => {
       if (err) {
         console.error("CRASH INTERCEPTÉ - SQL PRODUIT :", err);
-        // On renvoie un code JSON propre au lieu de faire planter le serveur
         return res.status(500).json({ error: "Erreur SQL Base de données : " + err.message });
       }
       res.json({ message: "Produit ajouté", id: result.insertId });
@@ -215,10 +205,15 @@ app.get("/colis", (req, res) => {
     res.json(result);
   });
 });
+
+/* ======================
+   HEALTH CHECK (Indispensable pour Render)
+====================== */
 app.get("/", (req, res) => {
   res.status(200).json({ status: "OK", message: "Le serveur Luham Logistik fonctionne parfaitement !" });
 });
-// ROUTE DE SECOURS GLOBAL (Évite le renvoi de HTML vide qui casse le CORS)
+
+// ROUTE DE SECOURS GLOBAL
 app.use((req, res) => {
   res.status(404).json({ error: `La route ${req.originalUrl} n'existe pas.` });
 });
